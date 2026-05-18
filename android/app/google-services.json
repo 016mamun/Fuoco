@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "266560863544",
+    "project_id": "fuoco-253ac",
+    "storage_bucket": "fuoco-253ac.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:266560863544:android:71cd9d78d412b9f81e95cd",
+        "android_client_info": {
+          "package_name": "fuoco.company"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDHhx-KUbS4iMw5wyvCJJj_COGtxWHATz8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
