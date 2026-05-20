@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/cart_provider.dart';
 
@@ -5,6 +6,7 @@ final orderServiceProvider = Provider((ref) => OrderService());
 
 class OrderService {
   final List<Map<String, dynamic>> _dummyOrders = [];
+  final StreamController<List<Map<String, dynamic>>> _ordersController = StreamController<List<Map<String, dynamic>>>.broadcast();
 
   Future<void> placeOrder({
     required List<CartItem> items,
@@ -29,10 +31,12 @@ class OrderService {
     };
     
     _dummyOrders.insert(0, orderData);
+    _ordersController.add(List.from(_dummyOrders));
     await Future.delayed(const Duration(milliseconds: 500));
   }
 
-  Stream<List<Map<String, dynamic>>> getUserOrders() {
-    return Stream.value(_dummyOrders);
+  Stream<List<Map<String, dynamic>>> getUserOrders() async* {
+    yield List.from(_dummyOrders);
+    yield* _ordersController.stream;
   }
 }

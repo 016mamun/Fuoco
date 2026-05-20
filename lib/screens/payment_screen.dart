@@ -166,7 +166,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                         border: Border.all(color: Colors.grey.shade100, width: 1.0),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.02),
+                            color: Colors.black.withValues(alpha: 0.02),
                             blurRadius: 15,
                             offset: const Offset(0, 5),
                           ),
@@ -257,7 +257,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
           color: Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 12,
               offset: const Offset(0, -4),
             ),
@@ -276,7 +276,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFED145B).withOpacity(0.3),
+                  color: const Color(0xFFED145B).withValues(alpha: 0.3),
                   blurRadius: 12,
                   offset: const Offset(0, 6),
                 ),
@@ -371,7 +371,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
         margin: const EdgeInsets.only(bottom: 14),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFED145B).withOpacity(0.04) : Colors.white,
+          color: isSelected ? const Color(0xFFED145B).withValues(alpha: 0.04) : Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected ? const Color(0xFFED145B) : Colors.grey.shade100,
@@ -379,7 +379,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.03),
+              color: Colors.black.withValues(alpha: 0.03),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -394,7 +394,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: method['color'].withOpacity(0.1),
+                    color: method['color'].withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: Center(
@@ -452,9 +452,9 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFED145B).withOpacity(0.05),
+                      color: const Color(0xFFED145B).withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: const Color(0xFFED145B).withOpacity(0.15)),
+                      border: Border.all(color: const Color(0xFFED145B).withValues(alpha: 0.15)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,

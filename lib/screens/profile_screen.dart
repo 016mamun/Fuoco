@@ -7,6 +7,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/auth_service.dart';
 import '../widgets/fuoco_bottom_nav.dart';
+import '../providers/theme_provider.dart';
+import '../providers/language_provider.dart';
 import 'orders_screen.dart';
 import 'address_screen.dart';
 import 'login_screen.dart';
@@ -26,7 +28,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   bool _orderUpdates = true;
   bool _offersPromo = true;
   bool _newsletter = false;
-  String _selectedLanguage = 'English';
   
   String _savedBkash = '';
   String _savedNagad = '';
@@ -52,12 +53,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   Future<void> _loadUserSettings() async {
     final prefs = await SharedPreferences.getInstance();
+    final isDark = prefs.getBool('is_dark_mode') ?? false;
+    ref.read(isDarkModeProvider.notifier).setTheme(isDark);
     if (mounted) {
       setState(() {
         _orderUpdates = prefs.getBool('order_updates') ?? true;
         _offersPromo = prefs.getBool('offers_promo') ?? true;
         _newsletter = prefs.getBool('newsletter') ?? false;
-        _selectedLanguage = prefs.getString('language') ?? 'English';
         _savedBkash = prefs.getString('saved_bkash') ?? '';
         _savedNagad = prefs.getString('saved_nagad') ?? '';
         _savedCard = prefs.getString('saved_card') ?? '';
@@ -150,7 +152,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           border: Border.all(color: Colors.white, width: 3),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.08),
+                              color: Colors.black.withValues(alpha: 0.08),
                               blurRadius: 12,
                               offset: const Offset(0, 4),
                             ),
@@ -249,7 +251,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFFED145B).withOpacity(0.3),
+                          color: const Color(0xFFED145B).withValues(alpha: 0.3),
                           blurRadius: 10,
                           offset: const Offset(0, 5),
                         ),
@@ -290,7 +292,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final user = ref.watch(authServiceProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       extendBody: true,
       body: Column(
         children: [
@@ -305,7 +307,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFED145B).withOpacity(0.15),
+                  color: const Color(0xFFED145B).withValues(alpha: 0.15),
                   blurRadius: 16,
                   offset: const Offset(0, 6),
                 ),
@@ -342,7 +344,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                   border: Border.all(color: Colors.white, width: 3),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withOpacity(0.1),
+                                      color: Colors.black.withValues(alpha: 0.1),
                                       blurRadius: 10,
                                       offset: const Offset(0, 4),
                                     ),
@@ -457,9 +459,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
                 Container(
                   width: double.infinity,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFF8F9FA),
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).scaffoldBackgroundColor,
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
                   ),
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.fromLTRB(24, 24, 24, 120),
@@ -469,8 +471,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
                         _buildProfileOption(
                           icon: Icons.shopping_bag_outlined,
-                          title: 'My Orders',
-                          subtitle: 'History and tracking',
+                          title: ref.tr('my_orders'),
+                          subtitle: ref.tr('my_orders_sub'),
                           onTap: () => Navigator.push(
                             context,
                             MaterialPageRoute(builder: (context) => const OrdersScreen()),
@@ -478,8 +480,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         ),
                         _buildProfileOption(
                           icon: Icons.location_on_outlined,
-                          title: 'Delivery Address',
-                          subtitle: 'Manage your locations',
+                          title: ref.tr('delivery_address'),
+                          subtitle: ref.tr('delivery_address_sub'),
                           onTap: () => Navigator.push(
                             context,
                             MaterialPageRoute(builder: (context) => const AddressScreen()),
@@ -487,28 +489,28 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         ),
                         _buildProfileOption(
                           icon: Icons.credit_card_outlined,
-                          title: 'Payment Methods',
-                          subtitle: 'Cards and wallets',
+                          title: ref.tr('payment_methods'),
+                          subtitle: ref.tr('payment_methods_sub'),
                           onTap: () => _showPaymentMethodsBottomSheet(context),
                         ),
                         _buildProfileOption(
                           icon: Icons.notifications_none_outlined,
-                          title: 'Notifications',
-                          subtitle: 'Manage alerts',
+                          title: ref.tr('notifications'),
+                          subtitle: ref.tr('notifications_sub'),
                           onTap: () => _showNotificationsBottomSheet(context),
                         ),
                         _buildProfileOption(
                           icon: Icons.settings_outlined,
-                          title: 'Settings',
-                          subtitle: 'App preferences',
+                          title: ref.tr('settings'),
+                          subtitle: ref.tr('settings_sub'),
                           onTap: () => _showSettingsBottomSheet(context),
                         ),
                         const SizedBox(height: 10),
                         if (user != null)
                           _buildProfileOption(
                             icon: Icons.logout_rounded,
-                            title: 'Logout',
-                            subtitle: 'Sign out of your account',
+                            title: ref.tr('logout'),
+                            subtitle: ref.tr('logout_sub'),
                             iconColor: Colors.red,
                             textColor: Colors.red,
                             onTap: () {
@@ -518,8 +520,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         else
                           _buildProfileOption(
                             icon: Icons.login_rounded,
-                            title: 'Login',
-                            subtitle: 'Sign in to your account',
+                            title: ref.tr('login'),
+                            subtitle: ref.tr('login_sub'),
                             iconColor: const Color(0xFFED145B),
                             textColor: const Color(0xFFED145B),
                             onTap: () {
@@ -553,14 +555,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     Color? iconColor,
     Color? textColor,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Card(
       elevation: 0,
       margin: const EdgeInsets.only(bottom: 16),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: Colors.grey.shade100, width: 1.0),
+        side: BorderSide(color: isDark ? Colors.grey.shade800 : Colors.grey.shade100, width: 1.0),
       ),
-      color: Colors.white,
+      color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
         onTap: onTap,
@@ -571,7 +574,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: (iconColor ?? const Color(0xFFED145B)).withOpacity(0.08),
+                  color: (iconColor ?? const Color(0xFFED145B)).withValues(alpha: 0.08),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(icon, color: iconColor ?? const Color(0xFFED145B), size: 22),
@@ -586,18 +589,22 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
-                        color: textColor ?? const Color(0xFF2D3142),
+                        color: textColor ?? (isDark ? Colors.white : const Color(0xFF2D3142)),
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       subtitle,
-                      style: TextStyle(fontSize: 12, color: Colors.grey.shade500, fontWeight: FontWeight.w500),
+                      style: TextStyle(
+                        fontSize: 12, 
+                        color: isDark ? Colors.grey[400] : Colors.grey.shade500, 
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ],
                 ),
               ),
-              Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.grey.shade400),
+              Icon(Icons.arrow_forward_ios_rounded, size: 14, color: isDark ? Colors.grey[600] : Colors.grey.shade400),
             ],
           ),
         ),
@@ -618,26 +625,30 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.red.withOpacity(0.1),
+                color: Colors.red.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.logout_rounded, color: Colors.red, size: 20),
             ),
             const SizedBox(width: 12),
-            const Text(
-              'Logout',
-              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: Color(0xFF2D3142)),
+            Text(
+              ref.tr('logout'),
+              style: TextStyle(
+                fontWeight: FontWeight.w900, 
+                fontSize: 18, 
+                color: Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF2D3142),
+              ),
             ),
           ],
         ),
-        content: const Text(
-          'Are you sure you want to logout from your account?',
-          style: TextStyle(color: Colors.grey, fontSize: 14, fontWeight: FontWeight.w500),
+        content: Text(
+          ref.tr('logout_confirm'),
+          style: const TextStyle(color: Colors.grey, fontSize: 14, fontWeight: FontWeight.w500),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+            child: Text(ref.tr('cancel'), style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -656,7 +667,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
-            child: const Text('Logout', style: TextStyle(fontWeight: FontWeight.bold)),
+            child: Text(ref.tr('logout'), style: const TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -665,6 +676,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   Widget _buildTabButton(String title, int index, int activeTab, VoidCallback onTap) {
     final isSelected = index == activeTab;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
@@ -673,14 +685,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           margin: const EdgeInsets.symmetric(horizontal: 4),
           padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFFED145B) : const Color(0xFFF1F1F5),
+            color: isSelected ? const Color(0xFFED145B) : (isDark ? const Color(0xFF252528) : const Color(0xFFF1F1F5)),
             borderRadius: BorderRadius.circular(12),
           ),
           alignment: Alignment.center,
           child: Text(
             title,
             style: TextStyle(
-              color: isSelected ? Colors.white : Colors.grey[700],
+              color: isSelected ? Colors.white : (isDark ? Colors.grey[400] : Colors.grey[700]),
               fontWeight: FontWeight.bold,
               fontSize: 13,
             ),
@@ -705,7 +717,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFED145B).withOpacity(0.25),
+            color: const Color(0xFFED145B).withValues(alpha: 0.25),
             blurRadius: 15,
             offset: const Offset(0, 6),
           ),
@@ -746,7 +758,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text('Fuoco Mobile Pay', style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w500)),
-              Icon(Icons.phone_android_rounded, color: Colors.white.withOpacity(0.8), size: 20),
+              Icon(Icons.phone_android_rounded, color: Colors.white.withValues(alpha: 0.8), size: 20),
             ],
           ),
         ],
@@ -769,7 +781,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.orange.withOpacity(0.25),
+            color: Colors.orange.withValues(alpha: 0.25),
             blurRadius: 15,
             offset: const Offset(0, 6),
           ),
@@ -810,7 +822,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text('Fuoco Mobile Pay', style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w500)),
-              Icon(Icons.phone_android_rounded, color: Colors.white.withOpacity(0.8), size: 20),
+              Icon(Icons.phone_android_rounded, color: Colors.white.withValues(alpha: 0.8), size: 20),
             ],
           ),
         ],
@@ -833,7 +845,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0F2027).withOpacity(0.3),
+            color: const Color(0xFF0F2027).withValues(alpha: 0.3),
             blurRadius: 15,
             offset: const Offset(0, 6),
           ),
@@ -850,7 +862,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 'Credit / Debit Card',
                 style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: 0.5),
               ),
-              Icon(Icons.credit_card, color: Colors.white.withOpacity(0.8), size: 22),
+              Icon(Icons.credit_card, color: Colors.white.withValues(alpha: 0.8), size: 22),
             ],
           ),
           const SizedBox(height: 10),
@@ -873,7 +885,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     width: 24,
                     height: 16,
                     decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(0.8),
+                      color: Colors.red.withValues(alpha: 0.8),
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -883,7 +895,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       width: 24,
                       height: 16,
                       decoration: BoxDecoration(
-                        color: Colors.amber.withOpacity(0.8),
+                        color: Colors.amber.withValues(alpha: 0.8),
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -910,6 +922,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setModalState) {
+            final isDark = Theme.of(context).brightness == Brightness.dark;
             return Container(
               padding: EdgeInsets.only(
                 bottom: MediaQuery.of(context).viewInsets.bottom,
@@ -917,9 +930,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 right: 24,
                 top: 16,
               ),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
               ),
               child: SingleChildScrollView(
                 child: Column(
@@ -931,16 +944,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         width: 44,
                         height: 5,
                         decoration: BoxDecoration(
-                          color: Colors.grey.shade300,
+                          color: isDark ? Colors.grey[800] : Colors.grey.shade300,
                           borderRadius: BorderRadius.circular(10),
                         ),
                       ),
                     ),
                     const SizedBox(height: 20),
-                    const Center(
+                    Center(
                       child: Text(
-                        'Payment Methods',
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF2D3142)),
+                        ref.tr('payment_methods'),
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: isDark ? Colors.white : const Color(0xFF2D3142)),
                       ),
                     ),
                     const SizedBox(height: 20),
@@ -965,9 +978,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
                     const SizedBox(height: 24),
                     
-                    const Text(
-                      'Account Details',
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Colors.grey),
+                    Text(
+                      ref.tr('account_details'),
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Colors.grey),
                     ),
                     const SizedBox(height: 12),
                     
@@ -976,13 +989,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         controller: bkashController,
                         keyboardType: TextInputType.phone,
                         onChanged: (val) => setModalState(() {}),
-                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF2D3142)),
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF2D3142)),
                         decoration: InputDecoration(
-                          labelText: 'Saved bKash Number',
+                          labelText: ref.tr('saved_bkash'),
                           labelStyle: const TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w500),
                           filled: true,
-                          fillColor: Colors.white,
-                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: Colors.grey.shade200)),
+                          fillColor: isDark ? const Color(0xFF252528) : Colors.white,
+                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: isDark ? Colors.grey.shade800 : Colors.grey.shade200)),
                           focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFED145B), width: 1.5)),
                           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                           prefixIcon: const Icon(Icons.phone_android_rounded, color: Color(0xFFED145B), size: 20),
@@ -993,13 +1006,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         controller: nagadController,
                         keyboardType: TextInputType.phone,
                         onChanged: (val) => setModalState(() {}),
-                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF2D3142)),
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF2D3142)),
                         decoration: InputDecoration(
-                          labelText: 'Saved Nagad Number',
+                          labelText: ref.tr('saved_nagad'),
                           labelStyle: const TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w500),
                           filled: true,
-                          fillColor: Colors.white,
-                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: Colors.grey.shade200)),
+                          fillColor: isDark ? const Color(0xFF252528) : Colors.white,
+                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: isDark ? Colors.grey.shade800 : Colors.grey.shade200)),
                           focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFED145B), width: 1.5)),
                           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                           prefixIcon: const Icon(Icons.phone_android_rounded, color: Color(0xFFED145B), size: 20),
@@ -1010,13 +1023,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         controller: cardController,
                         keyboardType: TextInputType.number,
                         onChanged: (val) => setModalState(() {}),
-                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF2D3142)),
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF2D3142)),
                         decoration: InputDecoration(
-                          labelText: 'Card Number',
+                          labelText: ref.tr('card_number'),
                           labelStyle: const TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w500),
                           filled: true,
-                          fillColor: Colors.white,
-                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: Colors.grey.shade200)),
+                          fillColor: isDark ? const Color(0xFF252528) : Colors.white,
+                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: isDark ? Colors.grey.shade800 : Colors.grey.shade200)),
                           focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFED145B), width: 1.5)),
                           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                           prefixIcon: const Icon(Icons.credit_card_rounded, color: Color(0xFFED145B), size: 20),
@@ -1038,7 +1051,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFFED145B).withOpacity(0.3),
+                              color: const Color(0xFFED145B).withValues(alpha: 0.3),
                               blurRadius: 10,
                               offset: const Offset(0, 5),
                             ),
@@ -1074,7 +1087,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             shadowColor: Colors.transparent,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                           ),
-                          child: const Text('Save Methods', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800)),
+                          child: Text(ref.tr('save_methods'), style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800)),
                         ),
                       ),
                     ),
@@ -1095,25 +1108,34 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     required bool value,
     required ValueChanged<bool> onChanged,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: isDark ? Colors.grey.shade800 : Colors.grey.shade200),
       ),
       child: SwitchListTile(
         title: Text(
           title,
-          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: Color(0xFF2D3142)),
+          style: TextStyle(
+            fontWeight: FontWeight.w800, 
+            fontSize: 14, 
+            color: isDark ? Colors.white : const Color(0xFF2D3142),
+          ),
         ),
         subtitle: Text(
           subtitle,
-          style: TextStyle(fontSize: 12, color: Colors.grey.shade500, fontWeight: FontWeight.w500),
+          style: TextStyle(
+            fontSize: 12, 
+            color: isDark ? Colors.grey[400] : Colors.grey.shade500, 
+            fontWeight: FontWeight.w500,
+          ),
         ),
         value: value,
         activeColor: const Color(0xFFED145B),
-        activeTrackColor: const Color(0xFFED145B).withOpacity(0.2),
+        activeTrackColor: const Color(0xFFED145B).withValues(alpha: 0.2),
         onChanged: onChanged,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       ),
@@ -1128,10 +1150,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setModalState) {
+            final isDark = Theme.of(context).brightness == Brightness.dark;
             return Container(
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
               ),
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(24),
@@ -1144,23 +1167,23 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         width: 44,
                         height: 5,
                         decoration: BoxDecoration(
-                          color: Colors.grey.shade300,
+                          color: isDark ? Colors.grey[800] : Colors.grey.shade300,
                           borderRadius: BorderRadius.circular(10),
                         ),
                       ),
                     ),
                     const SizedBox(height: 20),
-                    const Center(
+                    Center(
                       child: Text(
-                        'Notifications Settings',
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF2D3142)),
+                        ref.tr('notifications_settings'),
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: isDark ? Colors.white : const Color(0xFF2D3142)),
                       ),
                     ),
                     const SizedBox(height: 24),
                     
                     _buildSwitchContainer(
-                      title: 'Order Status Updates',
-                      subtitle: 'Receive push alerts on your food delivery progress',
+                      title: ref.tr('order_updates'),
+                      subtitle: ref.tr('order_updates_sub'),
                       value: _orderUpdates,
                       onChanged: (val) async {
                         setModalState(() => _orderUpdates = val);
@@ -1181,8 +1204,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     ),
                     
                     _buildSwitchContainer(
-                      title: 'Offers & Promotions',
-                      subtitle: 'Get real-time discount vouchers and menu deals',
+                      title: ref.tr('offers_promo'),
+                      subtitle: ref.tr('offers_promo_sub'),
                       value: _offersPromo,
                       onChanged: (val) async {
                         setModalState(() => _offersPromo = val);
@@ -1203,8 +1226,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     ),
                     
                     _buildSwitchContainer(
-                      title: 'Fuoco Newsletter',
-                      subtitle: 'Get weekly updates from partner restaurants',
+                      title: ref.tr('newsletter'),
+                      subtitle: ref.tr('newsletter_sub'),
                       value: _newsletter,
                       onChanged: (val) async {
                         setModalState(() => _newsletter = val);
@@ -1240,12 +1263,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
+        return Consumer(
+          builder: (context, ref, child) {
+            final isDark = Theme.of(context).brightness == Brightness.dark;
+            final selectedLanguage = ref.watch(languageProvider);
+            final isDarkMode = ref.watch(isDarkModeProvider);
+
             return Container(
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
               ),
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(24),
@@ -1258,23 +1285,27 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         width: 44,
                         height: 5,
                         decoration: BoxDecoration(
-                          color: Colors.grey.shade300,
+                          color: isDark ? Colors.grey[800] : Colors.grey.shade300,
                           borderRadius: BorderRadius.circular(10),
                         ),
                       ),
                     ),
                     const SizedBox(height: 20),
-                    const Center(
+                    Center(
                       child: Text(
-                        'App Preferences',
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF2D3142)),
+                        ref.tr('app_preferences'),
+                        style: TextStyle(
+                          fontSize: 20, 
+                          fontWeight: FontWeight.w900, 
+                          color: isDark ? Colors.white : const Color(0xFF2D3142),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 24),
                     
-                    const Text(
-                      'App Language',
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Colors.grey),
+                    Text(
+                      ref.tr('app_language'),
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Colors.grey),
                     ),
                     const SizedBox(height: 12),
                     
@@ -1282,11 +1313,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       children: [
                         Expanded(
                           child: GestureDetector(
-                            onTap: () async {
-                              setModalState(() => _selectedLanguage = 'English');
-                              setState(() => _selectedLanguage = 'English');
-                              final prefs = await SharedPreferences.getInstance();
-                              await prefs.setString('language', 'English');
+                            onTap: () {
+                              ref.read(languageProvider.notifier).setLanguage('English');
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
@@ -1301,15 +1329,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             child: Container(
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               decoration: BoxDecoration(
-                                color: _selectedLanguage == 'English'
-                                    ? const Color(0xFFED145B).withOpacity(0.05)
-                                    : Colors.white,
+                                color: selectedLanguage == 'English'
+                                    ? const Color(0xFFED145B).withValues(alpha: 0.05)
+                                    : (isDark ? const Color(0xFF252528) : Colors.white),
                                 borderRadius: BorderRadius.circular(14),
                                 border: Border.all(
-                                  color: _selectedLanguage == 'English'
+                                  color: selectedLanguage == 'English'
                                       ? const Color(0xFFED145B)
-                                      : Colors.grey.shade200,
-                                  width: _selectedLanguage == 'English' ? 1.5 : 1.0,
+                                      : (isDark ? Colors.grey.shade800 : Colors.grey.shade200),
+                                  width: selectedLanguage == 'English' ? 1.5 : 1.0,
                                 ),
                               ),
                               child: Center(
@@ -1317,9 +1345,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                   'English',
                                   style: TextStyle(
                                     fontWeight: FontWeight.w800,
-                                    color: _selectedLanguage == 'English'
+                                    color: selectedLanguage == 'English'
                                         ? const Color(0xFFED145B)
-                                        : const Color(0xFF2D3142),
+                                        : (isDark ? Colors.white70 : const Color(0xFF2D3142)),
                                   ),
                                 ),
                               ),
@@ -1329,11 +1357,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         const SizedBox(width: 16),
                         Expanded(
                           child: GestureDetector(
-                            onTap: () async {
-                              setModalState(() => _selectedLanguage = 'বাংলা');
-                              setState(() => _selectedLanguage = 'বাংলা');
-                              final prefs = await SharedPreferences.getInstance();
-                              await prefs.setString('language', 'বাংলা');
+                            onTap: () {
+                              ref.read(languageProvider.notifier).setLanguage('বাংলা');
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
@@ -1348,15 +1373,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             child: Container(
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               decoration: BoxDecoration(
-                                color: _selectedLanguage == 'বাংলা'
-                                    ? const Color(0xFFED145B).withOpacity(0.05)
-                                    : Colors.white,
+                                color: selectedLanguage == 'বাংলা'
+                                    ? const Color(0xFFED145B).withValues(alpha: 0.05)
+                                    : (isDark ? const Color(0xFF252528) : Colors.white),
                                 borderRadius: BorderRadius.circular(14),
                                 border: Border.all(
-                                  color: _selectedLanguage == 'বাংলা'
+                                  color: selectedLanguage == 'বাংলা'
                                       ? const Color(0xFFED145B)
-                                      : Colors.grey.shade200,
-                                  width: _selectedLanguage == 'বাংলা' ? 1.5 : 1.0,
+                                      : (isDark ? Colors.grey.shade800 : Colors.grey.shade200),
+                                  width: selectedLanguage == 'বাংলা' ? 1.5 : 1.0,
                                 ),
                               ),
                               child: Center(
@@ -1364,9 +1389,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                   'বাংলা',
                                   style: TextStyle(
                                     fontWeight: FontWeight.w800,
-                                    color: _selectedLanguage == 'বাংলা'
+                                    color: selectedLanguage == 'বাংলা'
                                         ? const Color(0xFFED145B)
-                                        : const Color(0xFF2D3142),
+                                        : (isDark ? Colors.white70 : const Color(0xFF2D3142)),
                                   ),
                                 ),
                               ),
@@ -1386,15 +1411,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     _buildSwitchContainer(
                       title: 'Enable Dark Mode',
                       subtitle: 'Switch the app view to dark theme style',
-                      value: false,
-                      onChanged: (val) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Dark theme is coming soon in the next release!'),
-                            backgroundColor: Color(0xFFED145B),
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
+                      value: isDarkMode,
+                      onChanged: (val) async {
+                        ref.read(isDarkModeProvider.notifier).setTheme(val);
+                        final prefs = await SharedPreferences.getInstance();
+                        await prefs.setBool('is_dark_mode', val);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(val ? 'Dark mode enabled!' : 'Light mode enabled.'),
+                              duration: const Duration(seconds: 1),
+                              behavior: SnackBarBehavior.floating,
+                              backgroundColor: const Color(0xFFED145B),
+                            ),
+                          );
+                        }
                       },
                     ),
                     const Divider(height: 24),
@@ -1407,13 +1438,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         foregroundColor: Colors.red,
                         padding: EdgeInsets.zero,
                       ),
-                      child: const Row(
+                      child: Row(
                         children: [
-                          Icon(Icons.delete_forever_rounded),
-                          SizedBox(width: 8),
+                          const Icon(Icons.delete_forever_rounded),
+                          const SizedBox(width: 8),
                           Text(
-                            'Delete My Account',
-                            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+                            ref.tr('delete_account'),
+                            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
                           ),
                         ],
                       ),
@@ -1442,26 +1473,26 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.red.withOpacity(0.1),
+                color: Colors.red.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.delete_forever_rounded, color: Colors.red, size: 20),
             ),
             const SizedBox(width: 12),
-            const Text(
-              'Delete Account',
-              style: TextStyle(color: Colors.red, fontWeight: FontWeight.w900, fontSize: 18),
+            Text(
+              ref.tr('delete_account'),
+              style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w900, fontSize: 18),
             ),
           ],
         ),
-        content: const Text(
-          'Are you sure you want to permanently delete your Fuoco account? This action is irreversible and all your orders, addresses, and settings data will be destroyed.',
-          style: TextStyle(color: Colors.grey, fontSize: 14, fontWeight: FontWeight.w500),
+        content: Text(
+          ref.tr('delete_account_confirm'),
+          style: const TextStyle(color: Colors.grey, fontSize: 14, fontWeight: FontWeight.w500),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+            child: Text(ref.tr('cancel'), style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -1493,7 +1524,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
-            child: const Text('Delete Permanently', style: TextStyle(fontWeight: FontWeight.bold)),
+            child: Text(ref.tr('delete_permanently'), style: const TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
       ),

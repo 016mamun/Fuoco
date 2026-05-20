@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/order_service.dart';
+import '../providers/language_provider.dart';
 import '../widgets/fuoco_bottom_nav.dart';
 import 'home_screen.dart';
 
@@ -37,8 +38,9 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: const Color(0xFFF9F9FA),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       extendBody: true,
       body: SafeArea(
         bottom: false,
@@ -63,10 +65,10 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
                       }
                     },
                   ),
-                  const Text(
-                    'My Order',
+                  Text(
+                    ref.tr('my_order'),
                     style: TextStyle(
-                      color: Colors.black87,
+                      color: isDark ? Colors.white : Colors.black87,
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
@@ -86,7 +88,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
               margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
-                color: const Color(0xFFF1F1F5),
+                color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF1F1F5),
                 borderRadius: BorderRadius.circular(24),
               ),
               child: Row(
@@ -184,7 +186,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
                           Icon(Icons.inbox_outlined, size: 60, color: Colors.grey[350]),
                           const SizedBox(height: 12),
                           Text(
-                            'No $_selectedFilter orders found',
+                            ref.tr('no_filtered_orders').replaceAll('{0}', _selectedFilter == 'All orders' ? ref.tr('all_orders') : _selectedFilter == 'Active' ? ref.tr('active') : ref.tr('cancelled')),
                             style: TextStyle(color: Colors.grey[500], fontSize: 16),
                           ),
                         ],
@@ -248,9 +250,9 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
       children: [
         Icon(Icons.article_outlined, size: 80, color: Colors.grey[300]),
         const SizedBox(height: 16),
-        const Text(
-          'No orders yet',
-          style: TextStyle(color: Colors.grey, fontSize: 18),
+        Text(
+          ref.tr('no_orders_yet'),
+          style: const TextStyle(color: Colors.grey, fontSize: 18),
         ),
         const SizedBox(height: 24),
         ElevatedButton(
@@ -266,7 +268,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
               borderRadius: BorderRadius.circular(20),
             ),
           ),
-          child: const Text('Order Now', style: TextStyle(color: Colors.white)),
+          child: Text(ref.tr('order_now'), style: const TextStyle(color: Colors.white)),
         ),
       ],
     );
@@ -282,6 +284,8 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
     final String displayOrderId = orderId.length >= 6 ? orderId.substring(0, 6).toUpperCase() : orderId.toUpperCase();
     
     // Status text and color logic
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     String statusText = 'Pending';
     Color statusColor = Colors.orange;
     String arrivalTime = '25 mins';
@@ -312,12 +316,12 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
       margin: const EdgeInsets.only(bottom: 20),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey.shade300, width: 1.2),
+        border: Border.all(color: isDark ? Colors.grey.shade800 : Colors.grey.shade300, width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -410,7 +414,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
                   decoration: BoxDecoration(
                     color: const Color(0xFFF8F9FA),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey.withOpacity(0.1)),
+                    border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
                   ),
                   child: Column(
                     children: items.map((item) {
@@ -458,7 +462,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Estimated Arrival',
+                      ref.tr('estimated_arrival'),
                       style: TextStyle(
                         fontSize: 11,
                         color: Colors.grey[400],
@@ -482,7 +486,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Text(
-                      'Total Amount',
+                      ref.tr('total_amount'),
                       style: TextStyle(
                         fontSize: 11,
                         color: Colors.grey[400],
@@ -506,7 +510,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      'Now',
+                      ref.tr('now'),
                       style: TextStyle(
                         fontSize: 11,
                         color: Colors.grey[400],
@@ -546,7 +550,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
                     ),
                   ),
                   child: Text(
-                    'Invoice',
+                    ref.tr('invoice'),
                     style: TextStyle(
                       color: Colors.grey[700],
                       fontWeight: FontWeight.bold,
@@ -569,9 +573,9 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
                       borderRadius: BorderRadius.circular(30),
                     ),
                   ),
-                  child: const Text(
-                    'Track Order',
-                    style: TextStyle(
+                  child: Text(
+                    ref.tr('track_order'),
+                    style: const TextStyle(
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -621,84 +625,349 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
     final items = order['items'] as List<dynamic>? ?? [];
     final address = order['address'] ?? 'No address provided';
     final paymentMethod = order['paymentMethod'] ?? 'COD';
+    final String orderId = order['id'] ?? '';
+    final String shortId = orderId.length > 6 ? orderId.substring(orderId.length - 6) : orderId;
+
+    final createdAt = order['createdAt'];
+    String dateStr = '';
+    if (createdAt != null) {
+      if (createdAt is DateTime) {
+        final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        final day = createdAt.day.toString().padLeft(2, '0');
+        final month = months[createdAt.month - 1];
+        final year = createdAt.year;
+        final hour = createdAt.hour > 12 ? createdAt.hour - 12 : (createdAt.hour == 0 ? 12 : createdAt.hour);
+        final min = createdAt.minute.toString().padLeft(2, '0');
+        final ampm = createdAt.hour >= 12 ? 'PM' : 'AM';
+        dateStr = '$day $month $year, $hour:$min $ampm';
+      } else {
+        dateStr = createdAt.toString();
+      }
+    } else {
+      dateStr = 'Just Now';
+    }
+
+    final double deliveryFee = 50.0;
+    final double subtotal = (total - deliveryFee) > 0 ? (total - deliveryFee) : total;
 
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          contentPadding: const EdgeInsets.all(24),
-          title: const Center(
-            child: Text(
-              'Order Invoice',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          child: Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.08),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
             ),
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Divider(),
-                const SizedBox(height: 10),
-                ...items.map((item) => Padding(
-                      padding: const EdgeInsets.only(bottom: 8.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(24),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Receipt Header
+                    Container(
+                      color: const Color(0xFFED145B).withValues(alpha: 0.03),
+                      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+                      child: Column(
                         children: [
-                          Expanded(
-                            child: Text(
-                              '${item['name']} x${item['quantity']}',
-                              style: const TextStyle(fontWeight: FontWeight.w500),
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFED145B),
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFFED145B).withValues(alpha: 0.3),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: const Icon(
+                              Icons.receipt_long_rounded,
+                              color: Colors.white,
+                              size: 24,
                             ),
                           ),
-                          Text('৳${((item['price'] ?? 0.0) * (item['quantity'] ?? 1)).toInt()}'),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'FUOCO OUTLET',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 1.5,
+                              color: Color(0xFF2D3142),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Order ID: #FQ-$shortId',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            dateStr,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey[500],
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
                         ],
                       ),
-                    )),
-                const SizedBox(height: 10),
-                const Divider(),
-                const SizedBox(height: 10),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('Delivery Fee', style: TextStyle(color: Colors.grey)),
-                    const Text('৳50'),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('Total Amount', style: TextStyle(fontWeight: FontWeight.bold)),
-                    Text(
-                      '৳${total.toInt()}',
-                      style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFED145B), fontSize: 16),
+                    ),
+
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            ref.tr('order_items') ?? 'ORDER ITEMS',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.grey,
+                              letterSpacing: 1.0,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          
+                          // Items Grid
+                          ...items.map((item) {
+                            final price = item['price'] ?? 0.0;
+                            final quantity = item['quantity'] ?? 1;
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 6.0),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      item['name'] ?? '',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                        color: Color(0xFF2D3142),
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ),
+                                  Text(
+                                    'x$quantity',
+                                    style: TextStyle(
+                                      color: Colors.grey[600],
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 24),
+                                  Text(
+                                    '৳${(price * quantity).toInt()}',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF2D3142),
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }),
+                          
+                          const SizedBox(height: 16),
+                          const DashedDivider(color: Color(0xFFE5E9F2)),
+                          const SizedBox(height: 16),
+
+                          // Summary Breakdown
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                ref.tr('subtotal'),
+                                style: TextStyle(color: Colors.grey[600], fontSize: 13, fontWeight: FontWeight.w500),
+                              ),
+                              Text(
+                                '৳${subtotal.toInt()}',
+                                style: const TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF2D3142), fontSize: 13),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                ref.tr('delivery_fee'),
+                                style: TextStyle(color: Colors.grey[600], fontSize: 13, fontWeight: FontWeight.w500),
+                              ),
+                              Text(
+                                '৳${deliveryFee.toInt()}',
+                                style: const TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF2D3142), fontSize: 13),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                ref.tr('total_amount'),
+                                style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF2D3142), fontSize: 15),
+                              ),
+                              Text(
+                                '৳${total.toInt()}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w900,
+                                  color: Color(0xFFED145B),
+                                  fontSize: 18,
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 20),
+                          const DashedDivider(color: Color(0xFFE5E9F2)),
+                          const SizedBox(height: 20),
+
+                          // Delivery Info Box
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF8F9FA),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: Colors.grey.shade100),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    const Icon(Icons.location_on_rounded, color: Color(0xFFED145B), size: 16),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      ref.tr('delivery_address'),
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w800,
+                                        color: Colors.grey[600],
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  address,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    height: 1.4,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF2D3142),
+                                  ),
+                                ),
+                                const SizedBox(height: 14),
+                                Row(
+                                  children: [
+                                    const Icon(Icons.payment_rounded, color: Colors.blueAccent, size: 16),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      ref.tr('payment_method_caps'),
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w800,
+                                        color: Colors.grey[600],
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: paymentMethod.toUpperCase() == 'COD' 
+                                        ? Colors.orange.withValues(alpha: 0.1) 
+                                        : const Color(0xFFED145B).withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    paymentMethod.toUpperCase(),
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w800,
+                                      color: paymentMethod.toUpperCase() == 'COD' 
+                                          ? Colors.orange[800] 
+                                          : const Color(0xFFED145B),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(height: 24),
+                          
+                          // Close Button
+                          Container(
+                            width: double.infinity,
+                            height: 50,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(16),
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFFED145B), Color(0xFFF93B7D)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFFED145B).withValues(alpha: 0.25),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: ElevatedButton(
+                              onPressed: () => Navigator.pop(context),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.transparent,
+                                foregroundColor: Colors.white,
+                                shadowColor: Colors.transparent,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
+                              child: Text(
+                                ref.tr('close'),
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
-                const Divider(),
-                const SizedBox(height: 10),
-                const Text('Delivery Address', style: TextStyle(color: Colors.grey, fontSize: 12)),
-                const SizedBox(height: 4),
-                Text(address, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
-                const SizedBox(height: 12),
-                const Text('Payment Method', style: TextStyle(color: Colors.grey, fontSize: 12)),
-                const SizedBox(height: 4),
-                Text(paymentMethod.toUpperCase(), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-              ],
-            ),
-          ),
-          actions: [
-            Center(
-              child: TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text('Close', style: TextStyle(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold)),
               ),
             ),
-          ],
+          ),
         );
       },
     );
@@ -721,7 +990,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).cardColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -743,22 +1012,22 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-              const Text(
-                'Track Order Progress',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              Text(
+                ref.tr('track_progress'),
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 24),
               if (currentStep == -1)
-                const Center(
+                Center(
                   child: Column(
                     children: [
-                      Icon(Icons.cancel_outlined, color: Colors.red, size: 60),
-                      SizedBox(height: 12),
+                      const Icon(Icons.cancel_outlined, color: Colors.red, size: 60),
+                      const SizedBox(height: 12),
                       Text(
-                        'This order has been cancelled',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.red),
+                        ref.tr('order_cancelled'),
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.red),
                       ),
-                      SizedBox(height: 20),
+                      const SizedBox(height: 20),
                     ],
                   ),
                 )
@@ -816,7 +1085,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
           width: 32,
           height: 32,
           decoration: BoxDecoration(
-            color: iconColor.withOpacity(0.1),
+            color: iconColor.withValues(alpha: 0.1),
             shape: BoxShape.circle,
             border: Border.all(
               color: iconColor,
@@ -876,7 +1145,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).cardColor,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -894,10 +1163,10 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Center(
+                    Center(
                       child: Text(
-                        'Filter Orders',
-                        style: TextStyle(
+                        ref.tr('filter_orders'),
+                        style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                           color: Colors.black87,
@@ -908,7 +1177,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
 
                     // Price Range Section
                     _buildFilterAccordionRow(
-                      title: 'Price Range',
+                      title: ref.tr('price_range') ?? 'Price Range',
                       isExpanded: expandedSections.contains('Price Range'),
                       onToggle: () {
                         setModalState(() {
@@ -969,7 +1238,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
 
                     // Order Status Section
                     _buildFilterAccordionRow(
-                      title: 'Order Status',
+                      title: ref.tr('order_status') ?? 'Order Status',
                       isExpanded: expandedSections.contains('Order Status'),
                       onToggle: () {
                         setModalState(() {
@@ -988,7 +1257,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
                           return ChoiceChip(
                             label: Text(status),
                             selected: isSelected,
-                            selectedColor: Theme.of(context).primaryColor.withOpacity(0.15),
+                            selectedColor: Theme.of(context).primaryColor.withValues(alpha: 0.15),
                             checkmarkColor: Theme.of(context).primaryColor,
                             labelStyle: TextStyle(
                               color: isSelected ? Theme.of(context).primaryColor : Colors.black87,
@@ -1007,7 +1276,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
 
                     // Date Range Section
                     _buildFilterAccordionRow(
-                      title: 'Date Range',
+                      title: ref.tr('date_range') ?? 'Date Range',
                       isExpanded: expandedSections.contains('Date Range'),
                       onToggle: () {
                         setModalState(() {
@@ -1026,7 +1295,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
                           return ChoiceChip(
                             label: Text(dateRange),
                             selected: isSelected,
-                            selectedColor: Theme.of(context).primaryColor.withOpacity(0.15),
+                            selectedColor: Theme.of(context).primaryColor.withValues(alpha: 0.15),
                             checkmarkColor: Theme.of(context).primaryColor,
                             labelStyle: TextStyle(
                               color: isSelected ? Theme.of(context).primaryColor : Colors.black87,
@@ -1045,7 +1314,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
 
                     // Payment Method Section
                     _buildFilterAccordionRow(
-                      title: 'Payment Method',
+                      title: ref.tr('payment_method') ?? 'Payment Method',
                       isExpanded: expandedSections.contains('Payment Method'),
                       onToggle: () {
                         setModalState(() {
@@ -1064,7 +1333,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
                           return ChoiceChip(
                             label: Text(method),
                             selected: isSelected,
-                            selectedColor: Theme.of(context).primaryColor.withOpacity(0.15),
+                            selectedColor: Theme.of(context).primaryColor.withValues(alpha: 0.15),
                             checkmarkColor: Theme.of(context).primaryColor,
                             labelStyle: TextStyle(
                               color: isSelected ? Theme.of(context).primaryColor : Colors.black87,
@@ -1109,7 +1378,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
                               ),
                             ),
                             child: Text(
-                              'Reset',
+                              ref.tr('reset') ?? 'Reset',
                               style: TextStyle(
                                 color: Colors.grey[700],
                                 fontWeight: FontWeight.bold,
@@ -1138,9 +1407,9 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
                                 borderRadius: BorderRadius.circular(30),
                               ),
                             ),
-                            child: const Text(
-                              'Apply',
-                              style: TextStyle(
+                            child: Text(
+                              ref.tr('apply'),
+                              style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -1200,6 +1469,43 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
             ),
           ),
       ],
+    );
+  }
+}
+
+class DashedDivider extends StatelessWidget {
+  final double height;
+  final Color color;
+  final double dashWidth;
+
+  const DashedDivider({
+    super.key,
+    this.height = 1.0,
+    this.color = Colors.grey,
+    this.dashWidth = 5.0,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        final boxWidth = constraints.constrainWidth();
+        final dashHeight = height;
+        final dashCount = (boxWidth / (2 * dashWidth)).floor();
+        return Flex(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          direction: Axis.horizontal,
+          children: List.generate(dashCount, (_) {
+            return SizedBox(
+              width: dashWidth,
+              height: dashHeight,
+              child: DecoratedBox(
+                decoration: BoxDecoration(color: color),
+              ),
+            );
+          }),
+        );
+      },
     );
   }
 }

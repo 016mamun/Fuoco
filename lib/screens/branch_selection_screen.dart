@@ -78,7 +78,7 @@ class _BranchSelectionScreenState extends ConsumerState<BranchSelectionScreen> {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
+                  color: Colors.black.withValues(alpha: 0.04),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -122,7 +122,7 @@ class _BranchSelectionScreenState extends ConsumerState<BranchSelectionScreen> {
                     borderRadius: BorderRadius.circular(14),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.04),
+                        color: Colors.black.withValues(alpha: 0.04),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -201,7 +201,7 @@ class _BranchSelectionScreenState extends ConsumerState<BranchSelectionScreen> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: const Color(0xFFED145B).withOpacity(0.05),
+                color: const Color(0xFFED145B).withValues(alpha: 0.05),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -283,7 +283,7 @@ class _BranchSelectionScreenState extends ConsumerState<BranchSelectionScreen> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -313,7 +313,7 @@ class _BranchSelectionScreenState extends ConsumerState<BranchSelectionScreen> {
                       width: 54,
                       height: 54,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFED145B).withOpacity(0.08),
+                        color: const Color(0xFFED145B).withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(
@@ -349,8 +349,8 @@ class _BranchSelectionScreenState extends ConsumerState<BranchSelectionScreen> {
                                 ),
                                 decoration: BoxDecoration(
                                   color: isOpen
-                                      ? const Color(0xFF2ECC71).withOpacity(0.12)
-                                      : Colors.grey.withOpacity(0.12),
+                                      ? const Color(0xFF2ECC71).withValues(alpha: 0.12)
+                                      : Colors.grey.withValues(alpha: 0.12),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(

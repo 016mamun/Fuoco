@@ -89,7 +89,7 @@ class FavoritesScreen extends ConsumerWidget {
                               borderRadius: BorderRadius.circular(20),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.grey.withOpacity(0.05),
+                                  color: Colors.grey.withValues(alpha: 0.05),
                                   blurRadius: 10,
                                   offset: const Offset(0, 5),
                                 ),
@@ -275,7 +275,7 @@ class FavoritesScreen extends ConsumerWidget {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFED145B).withOpacity(0.1),
+                                  color: const Color(0xFFED145B).withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(15),
                                 ),
                                 child: Text(
@@ -439,7 +439,7 @@ class FavoritesScreen extends ConsumerWidget {
                                 backgroundColor: const Color(0xFFED145B),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                                 elevation: 5,
-                                shadowColor: const Color(0xFFED145B).withOpacity(0.4),
+                                shadowColor: const Color(0xFFED145B).withValues(alpha: 0.4),
                               ),
                               child: const Text(
                                 'Add to Cart',

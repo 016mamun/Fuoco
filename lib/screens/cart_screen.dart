@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/food_item.dart';
 import '../providers/cart_provider.dart';
 import '../providers/coupon_provider.dart';
+import '../providers/language_provider.dart';
 import 'delivery_screen.dart';
 import 'home_screen.dart';
 
@@ -96,8 +97,10 @@ class _CartScreenState extends ConsumerState<CartScreen> {
 
     final dynamicSuggestedExtras = _getDynamicSuggestedExtras(cartItems);
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF9F9FA),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       resizeToAvoidBottomInset: true,
       body: SafeArea(
         bottom: false,
@@ -110,15 +113,15 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.black87, size: 20),
+                    icon: Icon(Icons.arrow_back_ios_new_rounded, color: isDark ? Colors.white70 : Colors.black87, size: 20),
                     onPressed: () {
                       Navigator.pop(context);
                     },
                   ),
-                  const Text(
-                    'My Cart',
+                  Text(
+                    ref.tr('my_cart'),
                     style: TextStyle(
-                      color: Color(0xFF2D3142),
+                      color: isDark ? Colors.white : const Color(0xFF2D3142),
                       fontSize: 20,
                       fontWeight: FontWeight.w900,
                     ),
@@ -145,9 +148,9 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                             color: Colors.grey[300],
                           ),
                           const SizedBox(height: 16),
-                          const Text(
-                            'Your cart is empty',
-                            style: TextStyle(color: Colors.grey, fontSize: 18),
+                          Text(
+                            ref.tr('cart_empty'),
+                            style: const TextStyle(color: Colors.grey, fontSize: 18),
                           ),
                           const SizedBox(height: 24),
                           ElevatedButton(
@@ -166,9 +169,9 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                                 borderRadius: BorderRadius.circular(20),
                               ),
                             ),
-                            child: const Text(
-                              'Add Items',
-                              style: TextStyle(color: Colors.white),
+                            child: Text(
+                              ref.tr('add_items'),
+                              style: const TextStyle(color: Colors.white),
                             ),
                           ),
                         ],
@@ -194,11 +197,11 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                                       margin: const EdgeInsets.only(bottom: 16),
                                       padding: const EdgeInsets.all(12),
                                       decoration: BoxDecoration(
-                                        color: Colors.white,
+                                        color: Theme.of(context).cardColor,
                                         borderRadius: BorderRadius.circular(16),
                                         boxShadow: [
                                           BoxShadow(
-                                            color: Colors.black.withOpacity(0.03),
+                                            color: Colors.black.withValues(alpha: 0.03),
                                             blurRadius: 12,
                                             offset: const Offset(0, 4),
                                           ),
@@ -265,8 +268,8 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                                                       .decrementQuantity(item.id),
                                                   child: Container(
                                                     padding: const EdgeInsets.all(6),
-                                                    decoration: const BoxDecoration(
-                                                      color: Colors.white,
+                                                    decoration: BoxDecoration(
+                                                      color: Theme.of(context).cardColor,
                                                       shape: BoxShape.circle,
                                                     ),
                                                     child: const Icon(Icons.remove, size: 12, color: Color(0xFF2D3142)),
@@ -306,11 +309,11 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                                 ),
                                 if (dynamicSuggestedExtras.isNotEmpty) ...[
                                   const SizedBox(height: 16),
-                                  const Padding(
-                                    padding: EdgeInsets.symmetric(horizontal: 4),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 4),
                                     child: Text(
-                                      'We think you might also like...',
-                                      style: TextStyle(
+                                      ref.tr('suggested_extras'),
+                                      style: const TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.w900,
                                         color: Color(0xFF2D3142),
@@ -330,11 +333,11 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                                           width: 145,
                                           margin: const EdgeInsets.only(right: 14, bottom: 8, left: 4),
                                           decoration: BoxDecoration(
-                                            color: Colors.white,
+                                            color: Theme.of(context).cardColor,
                                             borderRadius: BorderRadius.circular(16),
                                             boxShadow: [
                                               BoxShadow(
-                                                color: Colors.black.withOpacity(0.04),
+                                                color: Colors.black.withValues(alpha: 0.04),
                                                 blurRadius: 10,
                                                 offset: const Offset(0, 4),
                                               ),
@@ -420,7 +423,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                                                           Container(
                                                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                                             decoration: BoxDecoration(
-                                                              color: const Color(0xFFED145B).withOpacity(0.1),
+                                                              color: const Color(0xFFED145B).withValues(alpha: 0.1),
                                                               borderRadius: BorderRadius.circular(8),
                                                             ),
                                                             child: Text(
@@ -453,11 +456,11 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                         Container(
                           padding: const EdgeInsets.fromLTRB(24, 16, 24, 30),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: Theme.of(context).cardColor,
                             borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.04),
+                                color: Colors.black.withValues(alpha: 0.04),
                                 blurRadius: 12,
                                 offset: const Offset(0, -4),
                               ),
@@ -485,8 +488,8 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                                           controller: _couponController,
                                           style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF2D3142)),
                                           decoration: InputDecoration(
-                                            hintText: 'Enter Coupon / Promo Code',
-                                            errorText: _couponError,
+                                            hintText: ref.tr('enter_coupon'),
+                                            errorText: _couponError != null ? ref.tr('invalid') : null,
                                             errorStyle: const TextStyle(height: 0),
                                             hintStyle: const TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w500),
                                             border: InputBorder.none,
@@ -519,7 +522,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                                               borderRadius: BorderRadius.circular(10),
                                             ),
                                           ),
-                                          child: const Text('Apply', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+                                          child: Text(ref.tr('apply'), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
                                         ),
                                       ),
                                     ],
@@ -531,7 +534,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                                   child: Padding(
                                     padding: const EdgeInsets.only(left: 4),
                                     child: Text(
-                                      '💡 Try WELCOME50, FUOCO100, or FREE50',
+                                      ref.tr('try_coupon'),
                                       style: TextStyle(fontSize: 10, color: Colors.grey[500], fontWeight: FontWeight.w500),
                                     ),
                                   ),
@@ -550,7 +553,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                                       const SizedBox(width: 10),
                                       Expanded(
                                         child: Text(
-                                          "Promo '${appliedCoupon.code}' (৳${discount.toInt()} Off)",
+                                          ref.tr('promo_applied').replaceAll('{0}', appliedCoupon.code).replaceAll('{1}', discount.toInt().toString()),
                                           style: const TextStyle(fontWeight: FontWeight.w800, color: Colors.green, fontSize: 13),
                                         ),
                                       ),
@@ -558,7 +561,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                                         onTap: () {
                                           ref.read(couponProvider.notifier).clearCoupon();
                                         },
-                                        child: const Text('Remove', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w800, fontSize: 13)),
+                                        child: Text(ref.tr('remove'), style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w800, fontSize: 13)),
                                       ),
                                     ],
                                   ),
@@ -571,7 +574,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  const Text('Subtotal', style: TextStyle(fontSize: 13, color: Colors.grey, fontWeight: FontWeight.w500)),
+                                  Text(ref.tr('subtotal'), style: const TextStyle(fontSize: 13, color: Colors.grey, fontWeight: FontWeight.w500)),
                                   Text('৳${totalPrice.toInt()}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF2D3142))),
                                 ],
                               ),
@@ -580,7 +583,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    const Text('Discount', style: TextStyle(fontSize: 13, color: Colors.redAccent, fontWeight: FontWeight.w500)),
+                                    Text(ref.tr('discount'), style: const TextStyle(fontSize: 13, color: Colors.redAccent, fontWeight: FontWeight.w500)),
                                     Text('-৳${discount.toInt()}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Colors.redAccent)),
                                   ],
                                 ),
@@ -589,7 +592,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  const Text('Total Amount', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Color(0xFF2D3142))),
+                                  Text(ref.tr('total_amount'), style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Color(0xFF2D3142))),
                                   Text('৳${grandTotal.toInt()}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFFED145B))),
                                 ],
                               ),
@@ -610,7 +613,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                                     ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: const Color(0xFFED145B).withOpacity(0.3),
+                                        color: const Color(0xFFED145B).withValues(alpha: 0.3),
                                         blurRadius: 12,
                                         offset: const Offset(0, 6),
                                       ),
@@ -629,9 +632,9 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                                       shadowColor: Colors.transparent,
                                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                                     ),
-                                    child: const Text(
-                                      'Proceed to Delivery',
-                                      style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800),
+                                    child: Text(
+                                      ref.tr('proceed_delivery'),
+                                      style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800),
                                     ),
                                   ),
                                 ),

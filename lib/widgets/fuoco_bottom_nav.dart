@@ -17,8 +17,9 @@ class FuocoBottomNav extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isSearching = ref.watch(searchBarVisibilityProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return BottomAppBar(
-      color: Colors.white,
+      color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
       shape: const CircularNotchedRectangle(),
       notchMargin: 8,
       child: SizedBox(
@@ -83,17 +84,20 @@ class FuocoBottomNav extends ConsumerWidget {
   }
 
   Widget _buildNavItem(BuildContext context, IconData icon, bool isSelected, VoidCallback onTap) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFED145B).withOpacity(0.1) : Colors.transparent,
+          color: isSelected ? const Color(0xFFED145B).withValues(alpha: 0.1) : Colors.transparent,
           borderRadius: BorderRadius.circular(15),
         ),
         child: Icon(
           icon,
-          color: isSelected ? const Color(0xFFED145B) : Colors.grey,
+          color: isSelected 
+              ? const Color(0xFFED145B) 
+              : (isDark ? Colors.grey.shade400 : Colors.grey),
           size: 26,
         ),
       ),
@@ -106,13 +110,19 @@ class FuocoFAB extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return FloatingActionButton(
       onPressed: () => Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const CartScreen()),
       ),
       backgroundColor: const Color(0xFFED145B),
-      shape: const CircleBorder(side: BorderSide(color: Colors.white, width: 4)),
+      shape: CircleBorder(
+        side: BorderSide(
+          color: isDark ? const Color(0xFF121212) : Colors.white, 
+          width: 4,
+        ),
+      ),
       elevation: 4,
       child: const Icon(Icons.shopping_cart_rounded, color: Colors.white, size: 28),
     );

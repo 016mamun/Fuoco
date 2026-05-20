@@ -6,6 +6,7 @@ import '../providers/cart_provider.dart';
 
 import '../providers/search_provider.dart';
 import '../providers/branch_provider.dart';
+import '../providers/language_provider.dart';
 import '../services/auth_service.dart';
 import 'login_screen.dart';
 import 'register_screen.dart';
@@ -469,8 +470,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       extendBody: true,
       body: SafeArea(
         bottom: false,
@@ -521,7 +523,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     child: Container(
                                       padding: const EdgeInsets.all(6),
                                       decoration: BoxDecoration(
-                                        color: const Color(0xFFED145B).withOpacity(0.08),
+                                        color: const Color(0xFFED145B).withValues(alpha: 0.08),
                                         shape: BoxShape.circle,
                                       ),
                                       child: const Icon(
@@ -538,7 +540,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     child: Container(
                                       padding: const EdgeInsets.all(6),
                                       decoration: BoxDecoration(
-                                        color: const Color(0xFFED145B).withOpacity(0.08),
+                                        color: const Color(0xFFED145B).withValues(alpha: 0.08),
                                         shape: BoxShape.circle,
                                       ),
                                       child: const Icon(
@@ -557,19 +559,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ),
                   ),
                   
-                  // Food Grid in White Background
+                  // Food Grid in Background
                   SliverToBoxAdapter(
                     child: Container(
-                      color: Colors.white,
+                      color: Theme.of(context).scaffoldBackgroundColor,
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const SizedBox(height: 16),
                           Text(
-                            _selectedCategory,
-                            style: const TextStyle(
-                              color: Colors.black87,
+                            ref.tr('cat_$_selectedCategory'),
+                            style: TextStyle(
+                              color: isDark ? Colors.white : Colors.black87,
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                             ),
@@ -616,15 +618,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               // Left side: Location Switcher Capsule (Pill)
-              GestureDetector(
+              Expanded(
+                child: GestureDetector(
                 onTap: () => _showBranchSwitcherBottomSheet(context, ref),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  height: 38,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(16),
+                    color: Colors.white.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(19),
                     border: Border.all(
-                      color: Colors.white.withOpacity(0.15),
+                      color: Colors.white.withValues(alpha: 0.15),
                       width: 1.0,
                     ),
                   ),
@@ -640,15 +644,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       Flexible(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
-                                  'Branch',
+                                  ref.tr('branch'),
                                   style: TextStyle(
-                                    color: Colors.white.withOpacity(0.8),
+                                    color: Colors.white.withValues(alpha: 0.8),
                                     fontSize: 10,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -656,7 +661,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 const SizedBox(width: 2),
                                 Icon(
                                   Icons.keyboard_arrow_down_rounded,
-                                  color: Colors.white.withOpacity(0.8),
+                                  color: Colors.white.withValues(alpha: 0.8),
                                   size: 12,
                                 ),
                               ],
@@ -678,10 +683,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                 ),
               ),
+              ),
               const SizedBox(width: 12),
               // Right side: Notification + Cart Badge + Sign In/Up
               Row(
                 mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   if (ref.watch(authServiceProvider) == null) ...[
                     // Cart Badge
@@ -699,17 +706,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         backgroundColor: Colors.white,
                         foregroundColor: const Color(0xFFED145B),
                         elevation: 2,
-                        shadowColor: Colors.black.withOpacity(0.2),
+                        shadowColor: Colors.black.withValues(alpha: 0.2),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(19),
                         ),
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                        minimumSize: Size.zero,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        minimumSize: const Size(0, 38),
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
-                      child: const Text(
-                        'Sign In',
-                        style: TextStyle(
+                      child: Text(
+                        ref.tr('sign_in'),
+                        style: const TextStyle(
                           fontWeight: FontWeight.w800,
                           fontSize: 12,
                         ),
@@ -728,15 +735,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         foregroundColor: Colors.white,
                         side: const BorderSide(color: Colors.white, width: 1.2),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(19),
                         ),
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        minimumSize: Size.zero,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        minimumSize: const Size(0, 38),
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
-                      child: const Text(
-                        'Sign Up',
-                        style: TextStyle(
+                      child: Text(
+                        ref.tr('sign_up'),
+                        style: const TextStyle(
                           fontWeight: FontWeight.w800,
                           fontSize: 12,
                         ),
@@ -747,15 +754,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     GestureDetector(
                       onTap: () => _showNotificationQuickView(),
                       child: Container(
-                        padding: const EdgeInsets.all(8),
+                        width: 38,
+                        height: 38,
+                        alignment: Alignment.center,
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
+                          color: Colors.white.withValues(alpha: 0.2),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
                           Icons.notifications_none_rounded,
                           color: Colors.white,
-                          size: 20,
+                          size: 18,
                         ),
                       ),
                     ),
@@ -777,7 +786,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.06),
+                    color: Colors.black.withValues(alpha: 0.06),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -792,7 +801,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   });
                 },
                 decoration: InputDecoration(
-                  hintText: 'Search for shops & restaurants',
+                  hintText: ref.tr('search_hint'),
                   hintStyle: TextStyle(color: Colors.grey[500], fontSize: 14),
                   prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFFED145B), size: 22),
                   suffixIcon: Row(
@@ -815,7 +824,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           padding: const EdgeInsets.all(8),
                           margin: const EdgeInsets.only(right: 8),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFED145B).withOpacity(0.1),
+                            color: const Color(0xFFED145B).withValues(alpha: 0.1),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
@@ -845,10 +854,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
         return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
           child: Column(
@@ -861,7 +871,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   width: 40,
                   height: 4.5,
                   decoration: BoxDecoration(
-                    color: Colors.grey[300],
+                    color: isDark ? Colors.grey[800] : Colors.grey[300],
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
@@ -870,30 +880,30 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Column(
+                  Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Select Branch',
+                        ref.tr('select_branch'),
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w900,
-                          color: Color(0xFF2D3142),
+                          color: isDark ? Colors.white : const Color(0xFF2D3142),
                         ),
                       ),
-                      SizedBox(height: 4),
+                      const SizedBox(height: 4),
                       Text(
-                        'Switch outlet to see menu & availability',
+                        ref.tr('switch_outlet'),
                         style: TextStyle(
                           fontSize: 12.5,
-                          color: Color(0xFF9C9EA8),
+                          color: isDark ? Colors.grey[400] : const Color(0xFF9C9EA8),
                           fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close_rounded, color: Colors.grey),
+                    icon: Icon(Icons.close_rounded, color: isDark ? Colors.white70 : Colors.grey),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ],
@@ -921,13 +931,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? const Color(0xFFED145B).withOpacity(0.04)
-                              : Colors.white,
+                              ? const Color(0xFFED145B).withValues(alpha: 0.04)
+                              : (isDark ? const Color(0xFF252528) : Colors.white),
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
                             color: isSelected
                                 ? const Color(0xFFED145B)
-                                : Colors.grey.shade200,
+                                : (isDark ? Colors.grey.shade800 : Colors.grey.shade200),
                             width: isSelected ? 2.0 : 1.2,
                           ),
                         ),
@@ -937,15 +947,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
                                 color: isSelected
-                                    ? const Color(0xFFED145B).withOpacity(0.1)
-                                    : Colors.grey[100],
+                                    ? const Color(0xFFED145B).withValues(alpha: 0.1)
+                                    : (isDark ? Colors.grey[850] : Colors.grey[100]),
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(
                                 Icons.storefront_rounded,
                                 color: isSelected
                                     ? const Color(0xFFED145B)
-                                    : Colors.grey[600],
+                                    : (isDark ? Colors.grey[400] : Colors.grey[600]),
                                 size: 20,
                               ),
                             ),
@@ -963,7 +973,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                           fontSize: 15,
                                           color: isSelected
                                               ? const Color(0xFFED145B)
-                                              : const Color(0xFF2D3142),
+                                              : (isDark ? Colors.white : const Color(0xFF2D3142)),
                                         ),
                                       ),
                                       const SizedBox(width: 8),
@@ -974,18 +984,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                         ),
                                         decoration: BoxDecoration(
                                           color: isOpen
-                                              ? const Color(0xFF2ECC71).withOpacity(0.12)
-                                              : Colors.grey.withOpacity(0.12),
+                                              ? const Color(0xFF2ECC71).withValues(alpha: 0.12)
+                                              : Colors.grey.withValues(alpha: 0.12),
                                           borderRadius: BorderRadius.circular(4),
                                         ),
                                         child: Text(
-                                          isOpen ? 'Open' : 'Closed',
+                                          isOpen ? ref.tr('open') : ref.tr('closed'),
                                           style: TextStyle(
                                             fontSize: 9,
                                             fontWeight: FontWeight.w800,
                                             color: isOpen
                                                 ? const Color(0xFF27AE60)
-                                                : Colors.grey.shade600,
+                                                : (isDark ? Colors.grey[400] : Colors.grey.shade600),
                                           ),
                                         ),
                                       ),
@@ -996,7 +1006,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     branch.address,
                                     style: TextStyle(
                                       fontSize: 11.5,
-                                      color: Colors.grey[600],
+                                      color: isDark ? Colors.grey[400] : Colors.grey[600],
                                       height: 1.3,
                                     ),
                                     maxLines: 1,
@@ -1095,10 +1105,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isNew ? const Color(0xFFED145B).withOpacity(0.06) : Colors.grey[50],
+        color: isNew ? const Color(0xFFED145B).withValues(alpha: 0.06) : Colors.grey[50],
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isNew ? const Color(0xFFED145B).withOpacity(0.15) : Colors.grey[200]!,
+          color: isNew ? const Color(0xFFED145B).withValues(alpha: 0.15) : Colors.grey[200]!,
           width: 1,
         ),
       ),
@@ -1108,7 +1118,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: isNew ? const Color(0xFFED145B).withOpacity(0.15) : Colors.grey[200],
+              color: isNew ? const Color(0xFFED145B).withValues(alpha: 0.15) : Colors.grey[200],
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -1179,15 +1189,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               MaterialPageRoute(builder: (context) => const CartScreen()),
             ),
             child: Container(
-              padding: const EdgeInsets.all(8),
+              width: 38,
+              height: 38,
+              alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
+                color: Colors.white.withValues(alpha: 0.2),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.shopping_cart_outlined,
                 color: Colors.white,
-                size: 20,
+                size: 18,
               ),
             ),
           ),
@@ -1205,7 +1217,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFFED145B).withOpacity(0.3),
+              color: const Color(0xFFED145B).withValues(alpha: 0.3),
               blurRadius: 15,
               offset: const Offset(0, 5),
             )
@@ -1314,13 +1326,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 boxShadow: [
                   if (!isSelected)
                     BoxShadow(
-                      color: Colors.grey.withOpacity(0.1),
+                      color: Colors.grey.withValues(alpha: 0.1),
                       blurRadius: 10,
                       spreadRadius: 1,
                     ),
                   if (isSelected)
                     BoxShadow(
-                      color: const Color(0xFFED145B).withOpacity(0.3),
+                      color: const Color(0xFFED145B).withValues(alpha: 0.3),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -1349,7 +1361,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    category,
+                    ref.tr('cat_$category'),
                     style: TextStyle(
                       color: isSelected ? Colors.white : Colors.black87,
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
@@ -1437,7 +1449,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             children: [
               Icon(Icons.search_off, size: 60, color: Colors.grey[300]),
               const SizedBox(height: 16),
-              const Text('No items found', style: TextStyle(color: Colors.grey)),
+              Text(ref.tr('no_items_found'), style: const TextStyle(color: Colors.grey)),
             ],
           ),
         ),
@@ -1456,16 +1468,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       itemCount: filteredItems.length,
       itemBuilder: (context, index) {
         final item = filteredItems[index];
+        final isDark = Theme.of(context).brightness == Brightness.dark;
         return GestureDetector(
           onTap: () => _showFoodDetailsBottomSheet(context, item),
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.grey.shade300, width: 1.2),
+              border: Border.all(color: isDark ? Colors.grey.shade800 : Colors.grey.shade300, width: 1.2),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
+                  color: Colors.black.withValues(alpha: 0.08),
                   blurRadius: 15,
                   spreadRadius: 1,
                   offset: const Offset(0, 5),
@@ -1484,7 +1497,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       child: Image.asset(
                         item.imageUrl,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const Icon(Icons.fastfood, color: Colors.grey, size: 40),
+                        errorBuilder: (_, __, ___) => Icon(Icons.fastfood, color: isDark ? Colors.grey.shade600 : Colors.grey, size: 40),
                       ),
                     ),
                   ),
@@ -1499,10 +1512,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         const SizedBox(width: 2),
                         Text(
                           item.rating.toString(),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black87,
+                            color: isDark ? Colors.white70 : Colors.black87,
                           ),
                         ),
                       ],
@@ -1513,8 +1526,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 const SizedBox(height: 12),
                 Text(
                   item.name,
-                  style: const TextStyle(
-                    color: Colors.black87,
+                  style: TextStyle(
+                    color: isDark ? Colors.white : Colors.black87,
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
                   ),
@@ -1525,7 +1538,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 Text(
                   '15 Min  |  200 Sell',
                   style: TextStyle(
-                    color: Colors.grey[400],
+                    color: isDark ? Colors.grey[500] : Colors.grey[400],
                     fontSize: 10,
                   ),
                 ),
@@ -1535,8 +1548,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   children: [
                     Text(
                       '৳${item.price.toInt()}',
-                      style: const TextStyle(
-                        color: Colors.black87,
+                      style: TextStyle(
+                        color: isDark ? const Color(0xFFED145B) : Colors.black87,
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),
@@ -1546,7 +1559,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ref.read(cartProvider.notifier).addItem(item);
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text('${item.name} added to cart!'),
+                            content: Text('${item.name} ${ref.tr('added_to_cart')}'),
                             duration: const Duration(seconds: 1),
                             backgroundColor: const Color(0xFFED145B),
                           ),
@@ -1646,7 +1659,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFED145B).withOpacity(0.1),
+                                  color: const Color(0xFFED145B).withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(15),
                                 ),
                                 child: Text(
@@ -1812,7 +1825,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     backgroundColor: const Color(0xFFED145B),
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                                     elevation: 5,
-                                    shadowColor: const Color(0xFFED145B).withOpacity(0.4),
+                                    shadowColor: const Color(0xFFED145B).withValues(alpha: 0.4),
                                   ),
                                   child: const Text(
                                     'Add to Cart',

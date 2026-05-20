@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'payment_screen.dart';
 import '../services/address_service.dart';
+import '../providers/language_provider.dart';
 import 'map_picker_screen.dart';
 
 class DeliveryScreen extends ConsumerStatefulWidget {
@@ -39,9 +40,9 @@ class _DeliveryScreenState extends ConsumerState<DeliveryScreen> {
                     icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.black87, size: 20),
                     onPressed: () => Navigator.pop(context),
                   ),
-                  const Text(
-                    'Deliver To',
-                    style: TextStyle(
+                  Text(
+                    ref.tr('deliver_to'),
+                    style: const TextStyle(
                       color: Color(0xFF2D3142),
                       fontSize: 20,
                       fontWeight: FontWeight.w900,
@@ -59,9 +60,9 @@ class _DeliveryScreenState extends ConsumerState<DeliveryScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Select Saved Address',
-                      style: TextStyle(
+                    Text(
+                      ref.tr('select_saved_address'),
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w900,
                         color: Color(0xFF2D3142),
@@ -84,10 +85,10 @@ class _DeliveryScreenState extends ConsumerState<DeliveryScreen> {
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(color: Colors.grey.shade100, width: 1.0),
                             ),
-                            child: const Center(
+                            child: Center(
                               child: Text(
-                                'No saved addresses found. Please add one in profile.',
-                                style: TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w500),
+                                ref.tr('no_saved_addresses'),
+                                style: const TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w500),
                               ),
                             ),
                           );
@@ -101,9 +102,9 @@ class _DeliveryScreenState extends ConsumerState<DeliveryScreen> {
                     ),
 
                     const SizedBox(height: 32),
-                    const Text(
-                      'OR Enter Manual Details',
-                      style: TextStyle(
+                    Text(
+                      ref.tr('or_manual_details'),
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w900,
                         color: Color(0xFF2D3142),
@@ -112,11 +113,11 @@ class _DeliveryScreenState extends ConsumerState<DeliveryScreen> {
                     const SizedBox(height: 16),
 
                     // Manual Input Fields
-                    _buildTextField(_nameController, 'Receiver Name', Icons.person_outline_rounded),
+                    _buildTextField(_nameController, ref.tr('receiver_name'), Icons.person_outline_rounded),
                     const SizedBox(height: 16),
-                    _buildTextField(_phoneController, 'Phone Number', Icons.phone_android_rounded, keyboardType: TextInputType.phone),
+                    _buildTextField(_phoneController, ref.tr('phone_number'), Icons.phone_android_rounded, keyboardType: TextInputType.phone),
                     const SizedBox(height: 16),
-                    _buildTextField(_addressController, 'Full Address', Icons.location_on_outlined),
+                    _buildTextField(_addressController, ref.tr('full_address'), Icons.location_on_outlined),
                     const SizedBox(height: 10),
                     GestureDetector(
                       onTap: () async {
@@ -139,9 +140,9 @@ class _DeliveryScreenState extends ConsumerState<DeliveryScreen> {
                           children: [
                             const Icon(Icons.map_rounded, color: Color(0xFFED145B), size: 18),
                             const SizedBox(width: 6),
-                            const Text(
-                              'Pick from Google Maps',
-                              style: TextStyle(
+                            Text(
+                              ref.tr('pick_from_map'),
+                              style: const TextStyle(
                                 color: Color(0xFFED145B),
                                 fontWeight: FontWeight.w800,
                                 fontSize: 13,
@@ -152,7 +153,7 @@ class _DeliveryScreenState extends ConsumerState<DeliveryScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    _buildTextField(_cityController, 'City', Icons.location_city_rounded),
+                    _buildTextField(_cityController, ref.tr('city'), Icons.location_city_rounded),
                   ],
                 ),
               ),
@@ -166,7 +167,7 @@ class _DeliveryScreenState extends ConsumerState<DeliveryScreen> {
           color: Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 12,
               offset: const Offset(0, -4),
             ),
@@ -185,7 +186,7 @@ class _DeliveryScreenState extends ConsumerState<DeliveryScreen> {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFED145B).withOpacity(0.3),
+                  color: const Color(0xFFED145B).withValues(alpha: 0.3),
                   blurRadius: 12,
                   offset: const Offset(0, 6),
                 ),
@@ -195,14 +196,14 @@ class _DeliveryScreenState extends ConsumerState<DeliveryScreen> {
               onPressed: () {
                 String finalAddress = "";
                 if (_selectedAddress != null) {
-                  finalAddress = "${_selectedAddress!['address'] ?? ""}, ${_selectedAddress!['city'] ?? ""}";
+                  finalAddress = "${_selectedAddress!['label'] ?? ""}, ${_selectedAddress!['city'] ?? ""}";
                 } else {
                   finalAddress = "${_addressController.text}, ${_cityController.text}";
                 }
 
                 if (finalAddress.trim().isEmpty || finalAddress.trim() == ",") {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Please select or enter a delivery location')),
+                    SnackBar(content: Text(ref.tr('please_select_location'))),
                   );
                   return;
                 }
@@ -218,9 +219,9 @@ class _DeliveryScreenState extends ConsumerState<DeliveryScreen> {
                 shadowColor: Colors.transparent,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               ),
-              child: const Text(
-                'Continue to Payment',
-                style: TextStyle(
+              child: Text(
+                ref.tr('continue_payment'),
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
@@ -235,6 +236,14 @@ class _DeliveryScreenState extends ConsumerState<DeliveryScreen> {
 
   Widget _buildAddressItem(Map<String, dynamic> address) {
     bool isSelected = _selectedAddressId == address['id'];
+    final String type = address['type'] ?? 'Home';
+    IconData typeIcon = Icons.location_on_rounded;
+    if (type == 'Home') {
+      typeIcon = Icons.home_rounded;
+    } else if (type == 'Office') {
+      typeIcon = Icons.work_rounded;
+    }
+
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -252,7 +261,7 @@ class _DeliveryScreenState extends ConsumerState<DeliveryScreen> {
         margin: const EdgeInsets.only(bottom: 14),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFED145B).withOpacity(0.04) : Colors.white,
+          color: isSelected ? const Color(0xFFED145B).withValues(alpha: 0.04) : Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected ? const Color(0xFFED145B) : Colors.grey.shade100,
@@ -260,7 +269,7 @@ class _DeliveryScreenState extends ConsumerState<DeliveryScreen> {
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.03),
+              color: Colors.black.withValues(alpha: 0.03),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -272,12 +281,12 @@ class _DeliveryScreenState extends ConsumerState<DeliveryScreen> {
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: isSelected 
-                    ? const Color(0xFFED145B).withOpacity(0.1) 
+                    ? const Color(0xFFED145B).withValues(alpha: 0.1) 
                     : Colors.grey[100],
                 shape: BoxShape.circle,
               ),
               child: Icon(
-                isSelected ? Icons.check_circle_rounded : Icons.location_on_rounded,
+                isSelected ? Icons.check_circle_rounded : typeIcon,
                 color: isSelected ? const Color(0xFFED145B) : Colors.grey[600],
                 size: 20,
               ),
@@ -292,7 +301,7 @@ class _DeliveryScreenState extends ConsumerState<DeliveryScreen> {
                     children: [
                       Expanded(
                         child: Text(
-                          address['label']?.split(',').first ?? 'Home',
+                          type,
                           style: TextStyle(
                             fontWeight: FontWeight.w800,
                             fontSize: 15,
@@ -331,7 +340,7 @@ class _DeliveryScreenState extends ConsumerState<DeliveryScreen> {
         border: Border.all(color: Colors.grey.shade200, width: 1.0),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
