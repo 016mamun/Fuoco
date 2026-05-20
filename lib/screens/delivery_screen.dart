@@ -26,196 +26,205 @@ class _DeliveryScreenState extends ConsumerState<DeliveryScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
-      extendBody: true,
-      body: Column(
-        children: [
-          Container(
-            color: const Color(0xFFFFA500),
-            child: SafeArea(
-              bottom: false,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
-                      onPressed: () => Navigator.pop(context),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Clean Flat Header (matching My Cart)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.black87, size: 20),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  const Text(
+                    'Deliver To',
+                    style: TextStyle(
+                      color: Color(0xFF2D3142),
+                      fontSize: 20,
+                      fontWeight: FontWeight.w900,
                     ),
-                    const Expanded(
-                      child: Center(
-                        child: Text(
-                          'Deliver To',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
+                  ),
+                  const SizedBox(width: 40), // Balanced spacing for alignment
+                ],
+              ),
+            ),
+
+            // Content Area
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 40),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Select Saved Address',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFF2D3142),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Saved Addresses List
+                    StreamBuilder<List<Map<String, dynamic>>>(
+                      stream: addressesStream,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const Center(child: CircularProgressIndicator());
+                        }
+                        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                          return Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: Colors.grey.shade100, width: 1.0),
+                            ),
+                            child: const Center(
+                              child: Text(
+                                'No saved addresses found. Please add one in profile.',
+                                style: TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w500),
+                              ),
+                            ),
+                          );
+                        }
+
+                        final addresses = snapshot.data!;
+                        return Column(
+                          children: addresses.map((addr) => _buildAddressItem(addr)).toList(),
+                        );
+                      },
+                    ),
+
+                    const SizedBox(height: 32),
+                    const Text(
+                      'OR Enter Manual Details',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFF2D3142),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Manual Input Fields
+                    _buildTextField(_nameController, 'Receiver Name', Icons.person_outline_rounded),
+                    const SizedBox(height: 16),
+                    _buildTextField(_phoneController, 'Phone Number', Icons.phone_android_rounded, keyboardType: TextInputType.phone),
+                    const SizedBox(height: 16),
+                    _buildTextField(_addressController, 'Full Address', Icons.location_on_outlined),
+                    const SizedBox(height: 10),
+                    GestureDetector(
+                      onTap: () async {
+                        final result = await Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const MapPickerScreen()),
+                        );
+                        if (result != null && result is Map<String, dynamic>) {
+                          setState(() {
+                            _addressController.text = result['address'];
+                            _selectedAddressId = null; // Unselect saved address if manual is used
+                            _selectedAddress = null;
+                          });
+                        }
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.map_rounded, color: Color(0xFFED145B), size: 18),
+                            const SizedBox(width: 6),
+                            const Text(
+                              'Pick from Google Maps',
+                              style: TextStyle(
+                                color: Color(0xFFED145B),
+                                fontWeight: FontWeight.w800,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                    const SizedBox(width: 48),
+                    const SizedBox(height: 16),
+                    _buildTextField(_cityController, 'City', Icons.location_city_rounded),
                   ],
                 ),
               ),
             ),
-          ),
-          // Curved Content Area
-          Expanded(
-            child: Stack(
-              children: [
-                // Orange background behind the curve (Only at the top)
-                Container(
-                  height: 50,
-                  color: const Color(0xFFFFA500),
-                ),
-                Container(
-                  width: double.infinity,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFF8F9FA),
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-                  ),
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 120),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Select Saved Address',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Saved Addresses List
-                        StreamBuilder<List<Map<String, dynamic>>>(
-                          stream: addressesStream,
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState == ConnectionState.waiting) {
-                              return const Center(child: CircularProgressIndicator());
-                            }
-                            if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                              return Container(
-                                padding: const EdgeInsets.all(20),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: const Center(
-                                  child: Text('No saved addresses found. Please add one in profile.', 
-                                  style: TextStyle(color: Colors.grey)),
-                                ),
-                              );
-                            }
-
-                            final addresses = snapshot.data!;
-                            return Column(
-                              children: addresses.map((addr) => _buildAddressItem(addr)).toList(),
-                            );
-                          },
-                        ),
-
-                        const SizedBox(height: 32),
-                        const Text(
-                          'OR Enter Manual Details',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Manual Input Fields (Restored Address Field)
-                        _buildTextField(_nameController, 'Receiver Name', Icons.person_outline),
-                        const SizedBox(height: 16),
-                        _buildTextField(_phoneController, 'Phone Number', Icons.phone_android_outlined, keyboardType: TextInputType.phone),
-                        const SizedBox(height: 16),
-                        _buildTextField(_addressController, 'Full Address', Icons.location_on_outlined),
-                        const SizedBox(height: 10),
-                        TextButton.icon(
-                          onPressed: () async {
-                            final result = await Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => const MapPickerScreen()),
-                            );
-                            if (result != null && result is Map<String, dynamic>) {
-                              setState(() {
-                                _addressController.text = result['address'];
-                                _selectedAddressId = null; // Unselect saved address if manual is used
-                                _selectedAddress = null;
-                              });
-                            }
-                          },
-                          icon: const Icon(Icons.map_outlined, color: Color(0xFFFFA500)),
-                          label: const Text(
-                            'Pick from Google Maps',
-                            style: TextStyle(color: Color(0xFFFFA500), fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        _buildTextField(_cityController, 'City', Icons.location_city_outlined),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
       bottomNavigationBar: Container(
-        padding: const EdgeInsets.fromLTRB(24, 24, 24, 40),
+        padding: const EdgeInsets.fromLTRB(24, 16, 24, 40),
         decoration: BoxDecoration(
           color: Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, -5),
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 12,
+              offset: const Offset(0, -4),
             ),
           ],
         ),
         child: SizedBox(
           width: double.infinity,
-          height: 55,
-          child: ElevatedButton(
-            onPressed: () {
-              String finalAddress = "";
-              if (_selectedAddress != null) {
-                finalAddress = "${_selectedAddress!['address'] ?? ""}, ${_selectedAddress!['city'] ?? ""}";
-              } else {
-                finalAddress = "${_addressController.text}, ${_cityController.text}";
-              }
-
-              if (finalAddress.trim().isEmpty || finalAddress.trim() == ",") {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Please select or enter a delivery location')),
-                );
-                return;
-              }
-
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => PaymentScreen(address: finalAddress)),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFFA500),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
+          height: 54,
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              gradient: const LinearGradient(
+                colors: [Color(0xFFED145B), Color(0xFFF93B7D)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
-              elevation: 5,
-              shadowColor: const Color(0xFFFFA500).withOpacity(0.4),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFED145B).withOpacity(0.3),
+                  blurRadius: 12,
+                  offset: const Offset(0, 6),
+                ),
+              ],
             ),
-            child: const Text(
-              'Continue to Payment',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+            child: ElevatedButton(
+              onPressed: () {
+                String finalAddress = "";
+                if (_selectedAddress != null) {
+                  finalAddress = "${_selectedAddress!['address'] ?? ""}, ${_selectedAddress!['city'] ?? ""}";
+                } else {
+                  finalAddress = "${_addressController.text}, ${_cityController.text}";
+                }
+
+                if (finalAddress.trim().isEmpty || finalAddress.trim() == ",") {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Please select or enter a delivery location')),
+                  );
+                  return;
+                }
+
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => PaymentScreen(address: finalAddress)),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                foregroundColor: Colors.white,
+                shadowColor: Colors.transparent,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
+              child: const Text(
+                'Continue to Payment',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ),
           ),
@@ -239,43 +248,41 @@ class _DeliveryScreenState extends ConsumerState<DeliveryScreen> {
         });
       },
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        margin: const EdgeInsets.only(bottom: 15),
-        padding: const EdgeInsets.all(20),
+        duration: const Duration(milliseconds: 250),
+        margin: const EdgeInsets.only(bottom: 14),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFFFA500).withOpacity(0.05) : Colors.white,
-          borderRadius: BorderRadius.circular(25),
+          color: isSelected ? const Color(0xFFED145B).withOpacity(0.04) : Colors.white,
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? const Color(0xFFFFA500) : Colors.transparent,
-            width: 2,
+            color: isSelected ? const Color(0xFFED145B) : Colors.grey.shade100,
+            width: isSelected ? 2.0 : 1.0,
           ),
           boxShadow: [
             BoxShadow(
-              color: isSelected 
-                  ? const Color(0xFFFFA500).withOpacity(0.1) 
-                  : Colors.black.withOpacity(0.03),
-              blurRadius: 15,
-              offset: const Offset(0, 8),
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: isSelected 
-                    ? const Color(0xFFFFA500) 
-                    : const Color(0xFFFFA500).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(15),
+                    ? const Color(0xFFED145B).withOpacity(0.1) 
+                    : Colors.grey[100],
+                shape: BoxShape.circle,
               ),
               child: Icon(
-                isSelected ? Icons.check : Icons.location_on_rounded,
-                color: isSelected ? Colors.white : const Color(0xFFFFA500),
-                size: 22,
+                isSelected ? Icons.check_circle_rounded : Icons.location_on_rounded,
+                color: isSelected ? const Color(0xFFED145B) : Colors.grey[600],
+                size: 20,
               ),
             ),
-            const SizedBox(width: 18),
+            const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -287,24 +294,22 @@ class _DeliveryScreenState extends ConsumerState<DeliveryScreen> {
                         child: Text(
                           address['label']?.split(',').first ?? 'Home',
                           style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                            color: isSelected ? const Color(0xFFFFA500) : Colors.black87,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 15,
+                            color: isSelected ? const Color(0xFFED145B) : const Color(0xFF2D3142),
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      if (isSelected)
-                        const Icon(Icons.stars_rounded, color: Color(0xFFFFA500), size: 18),
                     ],
                   ),
                   const SizedBox(height: 4),
                   Text(
                     address['label'] ?? '',
                     style: TextStyle(
-                      fontSize: 13, 
+                      fontSize: 12, 
                       color: Colors.grey[600],
-                      height: 1.4,
+                      height: 1.3,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -322,25 +327,35 @@ class _DeliveryScreenState extends ConsumerState<DeliveryScreen> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.grey.shade200, width: 1.0),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withOpacity(0.02),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: TextField(
-        controller: controller,
-        keyboardType: keyboardType,
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
-          prefixIcon: Icon(icon, color: const Color(0xFFFFA500), size: 20),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-        ),
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      child: Row(
+        children: [
+          Icon(icon, color: const Color(0xFFED145B), size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: TextField(
+              controller: controller,
+              keyboardType: keyboardType,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF2D3142)),
+              decoration: InputDecoration(
+                hintText: hint,
+                hintStyle: const TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w500),
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(vertical: 14),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

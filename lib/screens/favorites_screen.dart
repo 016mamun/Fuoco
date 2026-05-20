@@ -61,7 +61,7 @@ class FavoritesScreen extends ConsumerWidget {
                               (route) => false,
                             ),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFFFA500),
+                              backgroundColor: const Color(0xFFED145B),
                               padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                             ),
@@ -129,7 +129,7 @@ class FavoritesScreen extends ConsumerWidget {
                                         onTap: () {
                                           ref.read(favoritesProvider.notifier).toggleFavorite(item);
                                         },
-                                        child: const Icon(Icons.favorite, color: Color(0xFFFFA500), size: 20),
+                                        child: const Icon(Icons.favorite, color: Color(0xFFED145B), size: 20),
                                       ),
                                     ],
                                   ),
@@ -140,7 +140,7 @@ class FavoritesScreen extends ConsumerWidget {
                                       Text(
                                         '৳${item.price.toInt()}',
                                         style: const TextStyle(
-                                          color: Color(0xFFFFA500),
+                                          color: Color(0xFFED145B),
                                           fontWeight: FontWeight.bold,
                                           fontSize: 16,
                                         ),
@@ -152,14 +152,14 @@ class FavoritesScreen extends ConsumerWidget {
                                             SnackBar(
                                               content: Text('${item.name} added to cart!'),
                                               duration: const Duration(seconds: 1),
-                                              backgroundColor: const Color(0xFFFFA500),
+                                              backgroundColor: const Color(0xFFED145B),
                                             ),
                                           );
                                         },
                                         child: Container(
                                           padding: const EdgeInsets.all(4),
                                           decoration: const BoxDecoration(
-                                            color: Color(0xFFFFA500),
+                                            color: Color(0xFFED145B),
                                             shape: BoxShape.circle,
                                           ),
                                           child: const Icon(Icons.add, color: Colors.white, size: 14),
@@ -217,7 +217,7 @@ class FavoritesScreen extends ConsumerWidget {
                             errorBuilder: (_, __, ___) => Container(
                               height: 250,
                               color: const Color(0xFFFFF3E0),
-                              child: const Icon(Icons.fastfood, size: 80, color: Color(0xFFFFA500)),
+                              child: const Icon(Icons.fastfood, size: 80, color: Color(0xFFED145B)),
                             ),
                           ),
                         ),
@@ -254,7 +254,7 @@ class FavoritesScreen extends ConsumerWidget {
                               },
                               child: const Icon(
                                 Icons.favorite,
-                                color: Color(0xFFFFA500),
+                                color: Color(0xFFED145B),
                                 size: 20,
                               ),
                             ),
@@ -275,13 +275,13 @@ class FavoritesScreen extends ConsumerWidget {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFFFA500).withOpacity(0.1),
+                                  color: const Color(0xFFED145B).withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(15),
                                 ),
                                 child: Text(
                                   item.category,
                                   style: const TextStyle(
-                                    color: Color(0xFFFFA500),
+                                    color: Color(0xFFED145B),
                                     fontWeight: FontWeight.bold,
                                     fontSize: 12,
                                   ),
@@ -371,7 +371,7 @@ class FavoritesScreen extends ConsumerWidget {
                                     style: const TextStyle(
                                       fontSize: 24,
                                       fontWeight: FontWeight.bold,
-                                      color: Color(0xFFFFA500),
+                                      color: Color(0xFFED145B),
                                     ),
                                   ),
                                 ],
@@ -431,15 +431,15 @@ class FavoritesScreen extends ConsumerWidget {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     content: Text('$quantity Pcs of ${item.name} added to cart!'),
-                                    backgroundColor: const Color(0xFFFFA500),
+                                    backgroundColor: const Color(0xFFED145B),
                                   ),
                                 );
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFFFA500),
+                                backgroundColor: const Color(0xFFED145B),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                                 elevation: 5,
-                                shadowColor: const Color(0xFFFFA500).withOpacity(0.4),
+                                shadowColor: const Color(0xFFED145B).withOpacity(0.4),
                               ),
                               child: const Text(
                                 'Add to Cart',

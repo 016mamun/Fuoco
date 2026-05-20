@@ -87,7 +87,7 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFFA500),
+        backgroundColor: const Color(0xFFED145B),
         elevation: 0,
         title: const Text('Pick Location', style: TextStyle(color: Colors.white, fontSize: 18)),
         leading: IconButton(
@@ -127,13 +127,13 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
               child: Icon(
                 Icons.location_on,
                 size: 50,
-                color: Color(0xFFFFA500),
+                color: Color(0xFFED145B),
               ),
             ),
           ),
           // Loading Indicator
           if (_isLoading)
-            const Center(child: CircularProgressIndicator(color: Color(0xFFFFA500))),
+            const Center(child: CircularProgressIndicator(color: Color(0xFFED145B))),
           
           // Address Panel
           Positioned(
@@ -161,10 +161,10 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFFA500).withOpacity(0.1),
+                          color: const Color(0xFFED145B).withOpacity(0.1),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.location_on, color: Color(0xFFFFA500), size: 20),
+                        child: const Icon(Icons.location_on, color: Color(0xFFED145B), size: 20),
                       ),
                       const SizedBox(width: 15),
                       Expanded(
@@ -194,7 +194,7 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
                         });
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFFA500),
+                        backgroundColor: const Color(0xFFED145B),
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(15),
@@ -219,7 +219,7 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
               mini: true,
               backgroundColor: Colors.white,
               onPressed: _getCurrentLocation,
-              child: const Icon(Icons.my_location, color: Color(0xFFFFA500)),
+              child: const Icon(Icons.my_location, color: Color(0xFFED145B)),
             ),
           ),
         ],

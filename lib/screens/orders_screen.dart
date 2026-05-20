@@ -260,7 +260,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
             (route) => false,
           ),
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFFFA500),
+            backgroundColor: const Color(0xFFED145B),
             padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
@@ -314,9 +314,10 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.grey.shade300, width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withOpacity(0.08),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -585,13 +586,23 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
 
   Widget _buildItemImage(String? imageUrl) {
     if (imageUrl != null && imageUrl.isNotEmpty) {
-      return Image.network(
-        imageUrl,
-        width: 70,
-        height: 70,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => _buildFallbackImage(),
-      );
+      if (imageUrl.startsWith('http')) {
+        return Image.network(
+          imageUrl,
+          width: 70,
+          height: 70,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => _buildFallbackImage(),
+        );
+      } else {
+        return Image.asset(
+          imageUrl,
+          width: 70,
+          height: 70,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => _buildFallbackImage(),
+        );
+      }
     }
     return _buildFallbackImage();
   }
@@ -663,7 +674,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
                     const Text('Total Amount', style: TextStyle(fontWeight: FontWeight.bold)),
                     Text(
                       '৳${total.toInt()}',
-                      style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFFFA500), fontSize: 16),
+                      style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFED145B), fontSize: 16),
                     ),
                   ],
                 ),

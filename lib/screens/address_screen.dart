@@ -15,7 +15,7 @@ class AddressScreen extends ConsumerWidget {
       body: Column(
         children: [
           Container(
-            color: const Color(0xFFFFA500),
+            color: const Color(0xFFED145B),
             child: SafeArea(
               bottom: false,
               child: Padding(
@@ -51,7 +51,7 @@ class AddressScreen extends ConsumerWidget {
                 // Orange background behind the curve (Only at the top)
                 Container(
                   height: 50,
-                  color: const Color(0xFFFFA500),
+                  color: const Color(0xFFED145B),
                 ),
                 Container(
                   width: double.infinity,
@@ -89,7 +89,7 @@ class AddressScreen extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAddAddressSheet(context, ref),
-        backgroundColor: const Color(0xFFFFA500),
+        backgroundColor: const Color(0xFFED145B),
         icon: const Icon(Icons.add, color: Colors.white),
         label: const Text('Add New Address', style: TextStyle(color: Colors.white)),
       ),
@@ -129,10 +129,10 @@ class AddressScreen extends ConsumerWidget {
         leading: Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: const Color(0xFFFFA500).withOpacity(0.1),
+            color: const Color(0xFFED145B).withOpacity(0.1),
             shape: BoxShape.circle,
           ),
-          child: const Icon(Icons.location_on, color: Color(0xFFFFA500)),
+          child: const Icon(Icons.location_on, color: Color(0xFFED145B)),
         ),
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -148,7 +148,7 @@ class AddressScreen extends ConsumerWidget {
             if (address['phone'] != null)
               Text(
                 address['phone'],
-                style: const TextStyle(fontSize: 12, color: Color(0xFFFFA500), fontWeight: FontWeight.w600),
+                style: const TextStyle(fontSize: 12, color: Color(0xFFED145B), fontWeight: FontWeight.w600),
               ),
           ],
         ),
@@ -228,10 +228,10 @@ class AddressScreen extends ConsumerWidget {
                     labelController.text = result['address'];
                   }
                 },
-                icon: const Icon(Icons.map_outlined, color: Color(0xFFFFA500)),
+                icon: const Icon(Icons.map_outlined, color: Color(0xFFED145B)),
                 label: const Text(
                   'Pick from Google Maps',
-                  style: TextStyle(color: Color(0xFFFFA500), fontWeight: FontWeight.w600),
+                  style: TextStyle(color: Color(0xFFED145B), fontWeight: FontWeight.w600),
                 ),
               ),
               const SizedBox(height: 20),
@@ -251,7 +251,7 @@ class AddressScreen extends ConsumerWidget {
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFFA500),
+                    backgroundColor: const Color(0xFFED145B),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                   ),
                   child: const Text(
@@ -279,7 +279,7 @@ class AddressScreen extends ConsumerWidget {
         keyboardType: keyboardType,
         decoration: InputDecoration(
           hintText: hint,
-          prefixIcon: Icon(icon, color: const Color(0xFFFFA500), size: 20),
+          prefixIcon: Icon(icon, color: const Color(0xFFED145B), size: 20),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.all(18),
         ),

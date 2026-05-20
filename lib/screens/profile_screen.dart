@@ -3,9 +3,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/auth_service.dart';
 import '../widgets/fuoco_bottom_nav.dart';
 import 'orders_screen.dart';
@@ -41,48 +40,28 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Future<void> _loadProfilePic() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      try {
-        final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-        if (doc.exists && doc.data()!.containsKey('profile_picture')) {
-          if (mounted) {
-            setState(() {
-              _profilePicBase64 = doc.data()!['profile_picture'] as String;
-            });
-          }
-        }
-      } catch (e) {
-        debugPrint('Error loading profile pic: $e');
-      }
+    final prefs = await SharedPreferences.getInstance();
+    final pic = prefs.getString('profile_picture');
+    if (pic != null && mounted) {
+      setState(() {
+        _profilePicBase64 = pic;
+      });
     }
     if (mounted) setState(() => _isLoadingPic = false);
   }
 
   Future<void> _loadUserSettings() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      try {
-        final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-        if (doc.exists) {
-          final data = doc.data();
-          if (data != null) {
-            if (mounted) {
-              setState(() {
-                _orderUpdates = data['order_updates'] ?? true;
-                _offersPromo = data['offers_promo'] ?? true;
-                _newsletter = data['newsletter'] ?? false;
-                _selectedLanguage = data['language'] ?? 'English';
-                _savedBkash = data['saved_bkash'] ?? '';
-                _savedNagad = data['saved_nagad'] ?? '';
-                _savedCard = data['saved_card'] ?? '';
-              });
-            }
-          }
-        }
-      } catch (e) {
-        debugPrint('Error loading settings: $e');
-      }
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _orderUpdates = prefs.getBool('order_updates') ?? true;
+        _offersPromo = prefs.getBool('offers_promo') ?? true;
+        _newsletter = prefs.getBool('newsletter') ?? false;
+        _selectedLanguage = prefs.getString('language') ?? 'English';
+        _savedBkash = prefs.getString('saved_bkash') ?? '';
+        _savedNagad = prefs.getString('saved_nagad') ?? '';
+        _savedCard = prefs.getString('saved_card') ?? '';
+      });
     }
   }
 
@@ -95,20 +74,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         imageQuality: 70,
       );
       if (image != null) {
-        final user = FirebaseAuth.instance.currentUser;
-        if (user != null) {
-          final bytes = await image.readAsBytes();
-          final base64String = base64Encode(bytes);
-          
-          await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
-            'profile_picture': base64String,
-          }, SetOptions(merge: true));
+        final bytes = await image.readAsBytes();
+        final base64String = base64Encode(bytes);
+        
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('profile_picture', base64String);
 
-          if (mounted) {
-            setState(() {
-              _profilePicBase64 = base64String;
-            });
-          }
+        if (mounted) {
+          setState(() {
+            _profilePicBase64 = base64String;
+          });
         }
       }
     } catch (e) {
@@ -117,7 +92,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   void _showEditProfileDialog() {
-    final user = FirebaseAuth.instance.currentUser;
+    final user = ref.read(authServiceProvider);
     if (user == null) return;
     
     final nameController = TextEditingController(text: user.displayName);
@@ -133,7 +108,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             bottom: MediaQuery.of(context).viewInsets.bottom,
             left: 24,
             right: 24,
-            top: 24,
+            top: 16,
           ),
           decoration: const BoxDecoration(
             color: Colors.white,
@@ -143,11 +118,22 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  'Edit Profile',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                Center(
+                  child: Container(
+                    width: 44,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 20),
+                const Text(
+                  'Edit Profile',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF2D3142)),
+                ),
+                const SizedBox(height: 24),
                 GestureDetector(
                   onTap: () async {
                     Navigator.pop(context); // Close sheet to pick image
@@ -161,6 +147,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         decoration: BoxDecoration(
                           color: Colors.grey[200],
                           shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 3),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.08),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
                         ),
                         child: ClipOval(
                           child: _isLoadingPic
@@ -201,7 +195,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         child: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: const BoxDecoration(
-                            color: Color(0xFFFFA500),
+                            color: Color(0xFFED145B),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(Icons.camera_alt, color: Colors.white, size: 16),
@@ -210,50 +204,79 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 24),
                 TextField(
                   controller: nameController,
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF2D3142)),
                   decoration: InputDecoration(
                     labelText: 'Full Name',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
-                    prefixIcon: const Icon(Icons.person_outline),
+                    labelStyle: const TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w500),
+                    filled: true,
+                    fillColor: Colors.white,
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: Colors.grey.shade200)),
+                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFED145B), width: 1.5)),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    prefixIcon: const Icon(Icons.person_outline_rounded, color: Color(0xFFED145B), size: 20),
                   ),
                 ),
                 const SizedBox(height: 16),
                 TextField(
                   controller: emailController,
                   readOnly: true,
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.grey.shade600),
                   decoration: InputDecoration(
                     labelText: 'Email Address (Cannot be changed)',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
-                    prefixIcon: const Icon(Icons.email_outlined),
+                    labelStyle: const TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w500),
                     filled: true,
-                    fillColor: Colors.grey[100],
+                    fillColor: Colors.grey.shade50,
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: Colors.grey.shade100)),
+                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: Colors.grey.shade200)),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    prefixIcon: const Icon(Icons.email_outlined, color: Colors.grey, size: 20),
                   ),
                 ),
                 const SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,
                   height: 50,
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      if (nameController.text.trim().isNotEmpty) {
-                        await user.updateDisplayName(nameController.text.trim());
-                        await user.reload();
-                        if (mounted) {
-                          setState(() {});
-                          Navigator.pop(context);
-                        }
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFFA500),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(14),
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFED145B), Color(0xFFF93B7D)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFED145B).withOpacity(0.3),
+                          blurRadius: 10,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
                     ),
-                    child: const Text('Save Changes', style: TextStyle(color: Colors.white, fontSize: 16)),
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        if (nameController.text.trim().isNotEmpty) {
+                          await user.updateDisplayName(nameController.text.trim());
+                          await user.reload();
+                          if (mounted) {
+                            setState(() {});
+                            Navigator.pop(context);
+                          }
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        foregroundColor: Colors.white,
+                        shadowColor: Colors.transparent,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      ),
+                      child: const Text('Save Changes', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800)),
+                    ),
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 30),
               ],
             ),
           ),
@@ -264,7 +287,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
+    final user = ref.watch(authServiceProvider);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
@@ -274,13 +297,24 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           // Premium Header with Profile Info
           Container(
             width: double.infinity,
-            decoration: const BoxDecoration(
-              color: Color(0xFFFFA500),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFFED145B), Color(0xFFF93B7D)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFED145B).withOpacity(0.15),
+                  blurRadius: 16,
+                  offset: const Offset(0, 6),
+                ),
+              ],
             ),
             child: SafeArea(
               bottom: false,
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 20, 24, 40),
+                padding: const EdgeInsets.fromLTRB(24, 20, 24, 30),
                 child: Column(
                   children: [
                     const Text(
@@ -288,10 +322,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 22,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.5,
                       ),
                     ),
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 24),
                     Row(
                       children: [
                         GestureDetector(
@@ -305,12 +340,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                   color: Colors.white24,
                                   shape: BoxShape.circle,
                                   border: Border.all(color: Colors.white, width: 3),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.1),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
                                 ),
                                 child: ClipOval(
                                   child: _isLoadingPic
                                       ? const Padding(
                                           padding: EdgeInsets.all(20.0),
-                                          child: CircularProgressIndicator(color: Colors.white),
+                                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                                         )
                                       : (_profilePicBase64 != null
                                           ? Image.memory(
@@ -351,7 +393,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                     color: Colors.white,
                                     shape: BoxShape.circle,
                                   ),
-                                  child: const Icon(Icons.camera_alt, color: Color(0xFFFFA500), size: 14),
+                                  child: const Icon(Icons.camera_alt_rounded, color: Color(0xFFED145B), size: 14),
                                 ),
                               ),
                             ],
@@ -368,10 +410,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
                                   color: Colors.white,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w900,
                                 ),
                               ),
+                              const SizedBox(height: 4),
                               Text(
                                 user?.email ?? 'user@example.com',
                                 maxLines: 1,
@@ -379,15 +422,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 style: const TextStyle(
                                   color: Colors.white70,
                                   fontSize: 14,
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        IconButton(
-                          onPressed: _showEditProfileDialog,
-                          icon: const Icon(Icons.edit, color: Colors.white),
-                        ),
+                        if (user != null)
+                          IconButton(
+                            onPressed: _showEditProfileDialog,
+                            icon: const Icon(Icons.edit_rounded, color: Colors.white, size: 22),
+                          ),
                       ],
                     ),
                   ],
@@ -399,10 +444,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           Expanded(
             child: Stack(
               children: [
-                // Orange background behind the curve (Only at the top)
+                // Gradient background behind the curve (Only at the top)
                 Container(
                   height: 50,
-                  color: const Color(0xFFFFA500),
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Color(0xFFED145B), Color(0xFFF93B7D)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                  ),
                 ),
                 Container(
                   width: double.infinity,
@@ -411,9 +462,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
                   ),
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(24, 30, 24, 120),
+                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 120),
                     child: Column(
                       children: [
+
+
                         _buildProfileOption(
                           icon: Icons.shopping_bag_outlined,
                           title: 'My Orders',
@@ -450,17 +503,32 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           subtitle: 'App preferences',
                           onTap: () => _showSettingsBottomSheet(context),
                         ),
-                        const SizedBox(height: 20),
-                        _buildProfileOption(
-                          icon: Icons.logout,
-                          title: 'Logout',
-                          subtitle: 'Sign out of your account',
-                          iconColor: Colors.red,
-                          textColor: Colors.red,
-                          onTap: () {
-                            _showLogoutDialog(context, ref);
-                          },
-                        ),
+                        const SizedBox(height: 10),
+                        if (user != null)
+                          _buildProfileOption(
+                            icon: Icons.logout_rounded,
+                            title: 'Logout',
+                            subtitle: 'Sign out of your account',
+                            iconColor: Colors.red,
+                            textColor: Colors.red,
+                            onTap: () {
+                              _showLogoutDialog(context, ref);
+                            },
+                          )
+                        else
+                          _buildProfileOption(
+                            icon: Icons.login_rounded,
+                            title: 'Login',
+                            subtitle: 'Sign in to your account',
+                            iconColor: const Color(0xFFED145B),
+                            textColor: const Color(0xFFED145B),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => const LoginScreen()),
+                              );
+                            },
+                          ),
                       ],
                     ),
                   ),
@@ -476,6 +544,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
+
   Widget _buildProfileOption({
     required IconData icon,
     required String title,
@@ -484,42 +553,54 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     Color? iconColor,
     Color? textColor,
   }) {
-    return Container(
+    return Card(
+      elevation: 0,
       margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: Colors.grey.shade100, width: 1.0),
       ),
-      child: ListTile(
+      color: Colors.white,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
         onTap: onTap,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        leading: Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: (iconColor ?? const Color(0xFFFFA500)).withOpacity(0.1),
-            shape: BoxShape.circle,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: (iconColor ?? const Color(0xFFED145B)).withOpacity(0.08),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: iconColor ?? const Color(0xFFED145B), size: 22),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: textColor ?? const Color(0xFF2D3142),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: TextStyle(fontSize: 12, color: Colors.grey.shade500, fontWeight: FontWeight.w500),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.grey.shade400),
+            ],
           ),
-          child: Icon(icon, color: iconColor ?? const Color(0xFFFFA500)),
         ),
-        title: Text(
-          title,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: textColor ?? Colors.black87,
-          ),
-        ),
-        subtitle: Text(
-          subtitle,
-          style: const TextStyle(fontSize: 12, color: Colors.grey),
-        ),
-        trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
       ),
     );
   }
@@ -529,16 +610,38 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
+        titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 10),
+        contentPadding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.logout_rounded, color: Colors.red, size: 20),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'Logout',
+              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: Color(0xFF2D3142)),
+            ),
+          ],
+        ),
+        content: const Text(
+          'Are you sure you want to logout from your account?',
+          style: TextStyle(color: Colors.grey, fontSize: 14, fontWeight: FontWeight.w500),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+            child: const Text('Cancel', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
           ),
           ElevatedButton(
             onPressed: () async {
-              await ref.read(authServiceProvider).signOut();
+              await ref.read(authServiceProvider.notifier).signOut();
               if (context.mounted) {
                 Navigator.of(context).pushAndRemoveUntil(
                   MaterialPageRoute(builder: (context) => const LoginScreen()),
@@ -548,9 +651,246 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
-            child: const Text('Logout', style: TextStyle(color: Colors.white)),
+            child: const Text('Logout', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTabButton(String title, int index, int activeTab, VoidCallback onTap) {
+    final isSelected = index == activeTab;
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: isSelected ? const Color(0xFFED145B) : const Color(0xFFF1F1F5),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            title,
+            style: TextStyle(
+              color: isSelected ? Colors.white : Colors.grey[700],
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBkashCardPreview(String number) {
+    final displayNum = number.isEmpty ? 'Not Linked' : number;
+    return Container(
+      width: double.infinity,
+      height: 140,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: const LinearGradient(
+          colors: [Color(0xFFD11550), Color(0xFFED145B)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFED145B).withOpacity(0.25),
+            blurRadius: 15,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'bKash Wallet',
+                style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: 0.5),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Text('ACTIVE', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            displayNum,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 2,
+            ),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Fuoco Mobile Pay', style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w500)),
+              Icon(Icons.phone_android_rounded, color: Colors.white.withOpacity(0.8), size: 20),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNagadCardPreview(String number) {
+    final displayNum = number.isEmpty ? 'Not Linked' : number;
+    return Container(
+      width: double.infinity,
+      height: 140,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: const LinearGradient(
+          colors: [Color(0xFFE65100), Color(0xFFFF9100)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.orange.withOpacity(0.25),
+            blurRadius: 15,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Nagad Wallet',
+                style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: 0.5),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Text('ACTIVE', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            displayNum,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 2,
+            ),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Fuoco Mobile Pay', style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w500)),
+              Icon(Icons.phone_android_rounded, color: Colors.white.withOpacity(0.8), size: 20),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCreditCardPreview(String number) {
+    final displayNum = number.isEmpty ? '•••• •••• •••• ••••' : number;
+    return Container(
+      width: double.infinity,
+      height: 140,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF2C3E50), Color(0xFF0F2027)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0F2027).withOpacity(0.3),
+            blurRadius: 15,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Credit / Debit Card',
+                style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: 0.5),
+              ),
+              Icon(Icons.credit_card, color: Colors.white.withOpacity(0.8), size: 22),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            displayNum,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 2,
+            ),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Fuoco Secure Pay', style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w500)),
+              Row(
+                children: [
+                  Container(
+                    width: 24,
+                    height: 16,
+                    decoration: BoxDecoration(
+                      color: Colors.red.withOpacity(0.8),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  Transform.translate(
+                    offset: const Offset(-8, 0),
+                    child: Container(
+                      width: 24,
+                      height: 16,
+                      decoration: BoxDecoration(
+                        color: Colors.amber.withOpacity(0.8),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ],
       ),
@@ -558,12 +898,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   void _showPaymentMethodsBottomSheet(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
-
     final bkashController = TextEditingController(text: _savedBkash);
     final nagadController = TextEditingController(text: _savedNagad);
     final cardController = TextEditingController(text: _savedCard);
+    int activePaymentTab = 0;
 
     showModalBottomSheet(
       context: context,
@@ -577,7 +915,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 bottom: MediaQuery.of(context).viewInsets.bottom,
                 left: 24,
                 right: 24,
-                top: 24,
+                top: 16,
               ),
               decoration: const BoxDecoration(
                 color: Colors.white,
@@ -588,95 +926,156 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Center(
+                      child: Container(
+                        width: 44,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
                     const Center(
                       child: Text(
                         'Payment Methods',
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF2D3142)),
                       ),
                     ),
+                    const SizedBox(height: 20),
+
+                    // Custom Tab Buttons
+                    Row(
+                      children: [
+                        _buildTabButton('bKash', 0, activePaymentTab, () => setModalState(() => activePaymentTab = 0)),
+                        _buildTabButton('Nagad', 1, activePaymentTab, () => setModalState(() => activePaymentTab = 1)),
+                        _buildTabButton('Card', 2, activePaymentTab, () => setModalState(() => activePaymentTab = 2)),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Interactive Card Preview
+                    if (activePaymentTab == 0)
+                      _buildBkashCardPreview(bkashController.text)
+                    else if (activePaymentTab == 1)
+                      _buildNagadCardPreview(nagadController.text)
+                    else
+                      _buildCreditCardPreview(cardController.text),
+
                     const SizedBox(height: 24),
                     
                     const Text(
-                      'Mobile Wallets',
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey),
+                      'Account Details',
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Colors.grey),
                     ),
                     const SizedBox(height: 12),
                     
-                    TextField(
-                      controller: bkashController,
-                      keyboardType: TextInputType.phone,
-                      decoration: InputDecoration(
-                        labelText: 'Saved bKash Number',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
-                        prefixIcon: const Icon(Icons.phone_android, color: Color(0xFFFFA500)),
+                    if (activePaymentTab == 0)
+                      TextField(
+                        controller: bkashController,
+                        keyboardType: TextInputType.phone,
+                        onChanged: (val) => setModalState(() {}),
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF2D3142)),
+                        decoration: InputDecoration(
+                          labelText: 'Saved bKash Number',
+                          labelStyle: const TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w500),
+                          filled: true,
+                          fillColor: Colors.white,
+                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: Colors.grey.shade200)),
+                          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFED145B), width: 1.5)),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          prefixIcon: const Icon(Icons.phone_android_rounded, color: Color(0xFFED145B), size: 20),
+                        ),
+                      )
+                    else if (activePaymentTab == 1)
+                      TextField(
+                        controller: nagadController,
+                        keyboardType: TextInputType.phone,
+                        onChanged: (val) => setModalState(() {}),
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF2D3142)),
+                        decoration: InputDecoration(
+                          labelText: 'Saved Nagad Number',
+                          labelStyle: const TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w500),
+                          filled: true,
+                          fillColor: Colors.white,
+                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: Colors.grey.shade200)),
+                          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFED145B), width: 1.5)),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          prefixIcon: const Icon(Icons.phone_android_rounded, color: Color(0xFFED145B), size: 20),
+                        ),
+                      )
+                    else
+                      TextField(
+                        controller: cardController,
+                        keyboardType: TextInputType.number,
+                        onChanged: (val) => setModalState(() {}),
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF2D3142)),
+                        decoration: InputDecoration(
+                          labelText: 'Card Number',
+                          labelStyle: const TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w500),
+                          filled: true,
+                          fillColor: Colors.white,
+                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: Colors.grey.shade200)),
+                          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFED145B), width: 1.5)),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          prefixIcon: const Icon(Icons.credit_card_rounded, color: Color(0xFFED145B), size: 20),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    
-                    TextField(
-                      controller: nagadController,
-                      keyboardType: TextInputType.phone,
-                      decoration: InputDecoration(
-                        labelText: 'Saved Nagad Number',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
-                        prefixIcon: const Icon(Icons.phone_android, color: Color(0xFFFFA500)),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    
-                    const Text(
-                      'Saved Credit/Debit Cards',
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey),
-                    ),
-                    const SizedBox(height: 12),
-                    
-                    TextField(
-                      controller: cardController,
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        labelText: 'Card Number (e.g. **** **** **** 4242)',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
-                        prefixIcon: const Icon(Icons.credit_card, color: Color(0xFFFFA500)),
-                      ),
-                    ),
+
                     const SizedBox(height: 30),
                     
                     SizedBox(
                       width: double.infinity,
                       height: 50,
-                      child: ElevatedButton(
-                        onPressed: () async {
-                          final bkash = bkashController.text.trim();
-                          final nagad = nagadController.text.trim();
-                          final card = cardController.text.trim();
-
-                          await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
-                            'saved_bkash': bkash,
-                            'saved_nagad': nagad,
-                            'saved_card': card,
-                          }, SetOptions(merge: true));
-
-                          setState(() {
-                            _savedBkash = bkash;
-                            _savedNagad = nagad;
-                            _savedCard = card;
-                          });
-
-                          if (context.mounted) {
-                            Navigator.pop(context);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Payment methods updated successfully!'),
-                                backgroundColor: Color(0xFFFFA500),
-                              ),
-                            );
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFFFA500),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(14),
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFFED145B), Color(0xFFF93B7D)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFED145B).withOpacity(0.3),
+                              blurRadius: 10,
+                              offset: const Offset(0, 5),
+                            ),
+                          ],
                         ),
-                        child: const Text('Save Methods', style: TextStyle(color: Colors.white, fontSize: 16)),
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            final prefs = await SharedPreferences.getInstance();
+                            await prefs.setString('saved_bkash', bkashController.text);
+                            await prefs.setString('saved_nagad', nagadController.text);
+                            await prefs.setString('saved_card', cardController.text);
+                            
+                            setState(() {
+                              _savedBkash = bkashController.text;
+                              _savedNagad = nagadController.text;
+                              _savedCard = cardController.text;
+                            });
+
+                            if (context.mounted) {
+                              Navigator.pop(context);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Payment methods updated successfully!'),
+                                  backgroundColor: Color(0xFFED145B),
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            foregroundColor: Colors.white,
+                            shadowColor: Colors.transparent,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          ),
+                          child: const Text('Save Methods', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800)),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 30),
@@ -690,10 +1089,38 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  void _showNotificationsBottomSheet(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
+  Widget _buildSwitchContainer({
+    required String title,
+    required String subtitle,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: SwitchListTile(
+        title: Text(
+          title,
+          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: Color(0xFF2D3142)),
+        ),
+        subtitle: Text(
+          subtitle,
+          style: TextStyle(fontSize: 12, color: Colors.grey.shade500, fontWeight: FontWeight.w500),
+        ),
+        value: value,
+        activeColor: const Color(0xFFED145B),
+        activeTrackColor: const Color(0xFFED145B).withOpacity(0.2),
+        onChanged: onChanged,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      ),
+    );
+  }
 
+  void _showNotificationsBottomSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -712,55 +1139,88 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Center(
+                      child: Container(
+                        width: 44,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
                     const Center(
                       child: Text(
                         'Notifications Settings',
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF2D3142)),
                       ),
                     ),
                     const SizedBox(height: 24),
                     
-                    SwitchListTile(
-                      title: const Text('Order Status Updates', style: TextStyle(fontWeight: FontWeight.bold)),
-                      subtitle: const Text('Receive push alerts on your food delivery progress'),
+                    _buildSwitchContainer(
+                      title: 'Order Status Updates',
+                      subtitle: 'Receive push alerts on your food delivery progress',
                       value: _orderUpdates,
-                      activeColor: const Color(0xFFFFA500),
                       onChanged: (val) async {
                         setModalState(() => _orderUpdates = val);
                         setState(() => _orderUpdates = val);
-                        await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
-                          'order_updates': val,
-                        }, SetOptions(merge: true));
+                        final prefs = await SharedPreferences.getInstance();
+                        await prefs.setBool('order_updates', val);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(val ? 'Order status updates enabled!' : 'Order status updates disabled.'),
+                              duration: const Duration(seconds: 1),
+                              behavior: SnackBarBehavior.floating,
+                              backgroundColor: const Color(0xFFED145B),
+                            ),
+                          );
+                        }
                       },
                     ),
-                    const Divider(height: 24),
                     
-                    SwitchListTile(
-                      title: const Text('Offers & Promotions', style: TextStyle(fontWeight: FontWeight.bold)),
-                      subtitle: const Text('Get real-time discount vouchers and menu deals'),
+                    _buildSwitchContainer(
+                      title: 'Offers & Promotions',
+                      subtitle: 'Get real-time discount vouchers and menu deals',
                       value: _offersPromo,
-                      activeColor: const Color(0xFFFFA500),
                       onChanged: (val) async {
                         setModalState(() => _offersPromo = val);
                         setState(() => _offersPromo = val);
-                        await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
-                          'offers_promo': val,
-                        }, SetOptions(merge: true));
+                        final prefs = await SharedPreferences.getInstance();
+                        await prefs.setBool('offers_promo', val);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(val ? 'Voucher & promo alerts enabled!' : 'Voucher & promo alerts disabled.'),
+                              duration: const Duration(seconds: 1),
+                              behavior: SnackBarBehavior.floating,
+                              backgroundColor: const Color(0xFFED145B),
+                            ),
+                          );
+                        }
                       },
                     ),
-                    const Divider(height: 24),
                     
-                    SwitchListTile(
-                      title: const Text('Fuoco Newsletter', style: TextStyle(fontWeight: FontWeight.bold)),
-                      subtitle: const Text('Get weekly updates from partner restaurants'),
+                    _buildSwitchContainer(
+                      title: 'Fuoco Newsletter',
+                      subtitle: 'Get weekly updates from partner restaurants',
                       value: _newsletter,
-                      activeColor: const Color(0xFFFFA500),
                       onChanged: (val) async {
                         setModalState(() => _newsletter = val);
                         setState(() => _newsletter = val);
-                        await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
-                          'newsletter': val,
-                        }, SetOptions(merge: true));
+                        final prefs = await SharedPreferences.getInstance();
+                        await prefs.setBool('newsletter', val);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(val ? 'Newsletter subscribed!' : 'Newsletter unsubscribed.'),
+                              duration: const Duration(seconds: 1),
+                              behavior: SnackBarBehavior.floating,
+                              backgroundColor: const Color(0xFFED145B),
+                            ),
+                          );
+                        }
                       },
                     ),
                     const SizedBox(height: 30),
@@ -775,9 +1235,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   void _showSettingsBottomSheet(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
-
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -796,17 +1253,28 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Center(
+                      child: Container(
+                        width: 44,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
                     const Center(
                       child: Text(
                         'App Preferences',
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF2D3142)),
                       ),
                     ),
                     const SizedBox(height: 24),
                     
                     const Text(
                       'App Language',
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey),
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Colors.grey),
                     ),
                     const SizedBox(height: 12),
                     
@@ -817,32 +1285,41 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             onTap: () async {
                               setModalState(() => _selectedLanguage = 'English');
                               setState(() => _selectedLanguage = 'English');
-                              await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
-                                'language': 'English',
-                              }, SetOptions(merge: true));
+                              final prefs = await SharedPreferences.getInstance();
+                              await prefs.setString('language', 'English');
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Language set to English'),
+                                    duration: Duration(seconds: 1),
+                                    behavior: SnackBarBehavior.floating,
+                                    backgroundColor: Color(0xFFED145B),
+                                  ),
+                                );
+                              }
                             },
                             child: Container(
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               decoration: BoxDecoration(
                                 color: _selectedLanguage == 'English'
-                                    ? const Color(0xFFFFA500).withOpacity(0.1)
-                                    : Colors.grey[50],
-                                borderRadius: BorderRadius.circular(12),
+                                    ? const Color(0xFFED145B).withOpacity(0.05)
+                                    : Colors.white,
+                                borderRadius: BorderRadius.circular(14),
                                 border: Border.all(
                                   color: _selectedLanguage == 'English'
-                                      ? const Color(0xFFFFA500)
-                                      : Colors.grey[200]!,
-                                  width: 1.5,
+                                      ? const Color(0xFFED145B)
+                                      : Colors.grey.shade200,
+                                  width: _selectedLanguage == 'English' ? 1.5 : 1.0,
                                 ),
                               ),
                               child: Center(
                                 child: Text(
                                   'English',
                                   style: TextStyle(
-                                    fontWeight: FontWeight.bold,
+                                    fontWeight: FontWeight.w800,
                                     color: _selectedLanguage == 'English'
-                                        ? const Color(0xFFFFA500)
-                                        : Colors.black87,
+                                        ? const Color(0xFFED145B)
+                                        : const Color(0xFF2D3142),
                                   ),
                                 ),
                               ),
@@ -855,32 +1332,41 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             onTap: () async {
                               setModalState(() => _selectedLanguage = 'বাংলা');
                               setState(() => _selectedLanguage = 'বাংলা');
-                              await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
-                                'language': 'বাংলা',
-                              }, SetOptions(merge: true));
+                              final prefs = await SharedPreferences.getInstance();
+                              await prefs.setString('language', 'বাংলা');
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('ভাষা পরিবর্তন করে বাংলায় করা হয়েছে'),
+                                    duration: Duration(seconds: 1),
+                                    behavior: SnackBarBehavior.floating,
+                                    backgroundColor: Color(0xFFED145B),
+                                  ),
+                                );
+                              }
                             },
                             child: Container(
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               decoration: BoxDecoration(
                                 color: _selectedLanguage == 'বাংলা'
-                                    ? const Color(0xFFFFA500).withOpacity(0.1)
-                                    : Colors.grey[50],
-                                borderRadius: BorderRadius.circular(12),
+                                    ? const Color(0xFFED145B).withOpacity(0.05)
+                                    : Colors.white,
+                                borderRadius: BorderRadius.circular(14),
                                 border: Border.all(
                                   color: _selectedLanguage == 'বাংলা'
-                                      ? const Color(0xFFFFA500)
-                                      : Colors.grey[200]!,
-                                  width: 1.5,
+                                      ? const Color(0xFFED145B)
+                                      : Colors.grey.shade200,
+                                  width: _selectedLanguage == 'বাংলা' ? 1.5 : 1.0,
                                 ),
                               ),
                               child: Center(
                                 child: Text(
                                   'বাংলা',
                                   style: TextStyle(
-                                    fontWeight: FontWeight.bold,
+                                    fontWeight: FontWeight.w800,
                                     color: _selectedLanguage == 'বাংলা'
-                                        ? const Color(0xFFFFA500)
-                                        : Colors.black87,
+                                        ? const Color(0xFFED145B)
+                                        : const Color(0xFF2D3142),
                                   ),
                                 ),
                               ),
@@ -893,20 +1379,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     
                     const Text(
                       'Visuals & Theme',
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey),
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Colors.grey),
                     ),
                     const SizedBox(height: 12),
                     
-                    SwitchListTile(
-                      title: const Text('Enable Dark Mode', style: TextStyle(fontWeight: FontWeight.bold)),
-                      subtitle: const Text('Switch the app view to dark theme style'),
+                    _buildSwitchContainer(
+                      title: 'Enable Dark Mode',
+                      subtitle: 'Switch the app view to dark theme style',
                       value: false,
-                      activeColor: const Color(0xFFFFA500),
                       onChanged: (val) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text('Dark theme is coming soon in the next release!'),
-                            backgroundColor: Color(0xFFFFA500),
+                            backgroundColor: Color(0xFFED145B),
+                            behavior: SnackBarBehavior.floating,
                           ),
                         );
                       },
@@ -923,11 +1409,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       ),
                       child: const Row(
                         children: [
-                          Icon(Icons.delete_forever_outlined),
+                          Icon(Icons.delete_forever_rounded),
                           SizedBox(width: 8),
                           Text(
                             'Delete My Account',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
                           ),
                         ],
                       ),
@@ -948,21 +1434,42 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Delete Account', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+        titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 10),
+        contentPadding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.delete_forever_rounded, color: Colors.red, size: 20),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'Delete Account',
+              style: TextStyle(color: Colors.red, fontWeight: FontWeight.w900, fontSize: 18),
+            ),
+          ],
+        ),
         content: const Text(
-            'Are you sure you want to permanently delete your Fuoco account? This action is irreversible and all your orders, addresses, and settings data will be destroyed.'),
+          'Are you sure you want to permanently delete your Fuoco account? This action is irreversible and all your orders, addresses, and settings data will be destroyed.',
+          style: TextStyle(color: Colors.grey, fontSize: 14, fontWeight: FontWeight.w500),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+            child: const Text('Cancel', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
           ),
           ElevatedButton(
             onPressed: () async {
-              final user = FirebaseAuth.instance.currentUser;
+              final user = ref.read(authServiceProvider);
               if (user != null) {
                 try {
-                  await FirebaseFirestore.instance.collection('users').doc(user.uid).delete();
-                  await user.delete();
+                  await Future.delayed(const Duration(milliseconds: 500));
+                  await Future.delayed(const Duration(milliseconds: 500));
                   if (context.mounted) {
                     Navigator.of(context).pushAndRemoveUntil(
                       MaterialPageRoute(builder: (context) => const LoginScreen()),
@@ -981,9 +1488,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
-            child: const Text('Delete Permanently', style: TextStyle(color: Colors.white)),
+            child: const Text('Delete Permanently', style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
       ),

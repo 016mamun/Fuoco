@@ -1,13 +1,10 @@
-import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:http/http.dart' as http;
 import 'package:flutter_stripe/flutter_stripe.dart';
 import '../providers/cart_provider.dart';
 import '../providers/coupon_provider.dart';
 import '../services/order_service.dart';
-import '../widgets/fuoco_bottom_nav.dart';
 import 'orders_screen.dart';
 import 'home_screen.dart';
 
@@ -49,14 +46,14 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
     {
       'id': 'card',
       'name': 'Credit/Debit Card',
-      'icon': Icons.credit_card_outlined,
+      'icon': Icons.credit_card_rounded,
       'color': Colors.blue,
     },
     {
       'id': 'cod',
       'name': 'Cash on Delivery',
-      'icon': Icons.moped_outlined,
-      'color': const Color(0xFFFFA500),
+      'icon': Icons.moped_rounded,
+      'color': const Color(0xFFED145B),
     },
   ];
 
@@ -127,235 +124,234 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
-      extendBody: true,
-      body: Column(
-        children: [
-          Container(
-            color: const Color(0xFFFFA500),
-            child: SafeArea(
-              bottom: false,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
-                      onPressed: () => Navigator.pop(context),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Clean Flat Header (matching My Cart and Deliver To)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.black87, size: 20),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  const Text(
+                    'Payment Method',
+                    style: TextStyle(
+                      color: Color(0xFF2D3142),
+                      fontSize: 20,
+                      fontWeight: FontWeight.w900,
                     ),
-                    const Expanded(
-                      child: Center(
-                        child: Text(
-                          'Payment Method',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
+                  ),
+                  const SizedBox(width: 40), // Balanced spacing for alignment
+                ],
+              ),
+            ),
+
+            // Content Area
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 40),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Bill Summary Card
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.grey.shade100, width: 1.0),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.02),
+                            blurRadius: 15,
+                            offset: const Offset(0, 5),
                           ),
-                        ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('Subtotal', style: TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w500)),
+                              Text('৳${totalPrice.toInt()}', style: const TextStyle(fontWeight: FontWeight.w800, color: Color(0xFF2D3142), fontSize: 13)),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          const Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text('Delivery Fee', style: TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w500)),
+                              Text('৳50', style: TextStyle(fontWeight: FontWeight.w800, color: Colors.green, fontSize: 13)),
+                            ],
+                          ),
+                          if (discount > 0) ...[
+                            const SizedBox(height: 10),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text('Promo Discount (${appliedCoupon!.code})', style: const TextStyle(color: Colors.redAccent, fontSize: 13, fontWeight: FontWeight.w500)),
+                                Text('-৳${discount.toInt()}', style: const TextStyle(fontWeight: FontWeight.w800, color: Colors.redAccent, fontSize: 13)),
+                              ],
+                            ),
+                          ],
+                          const Divider(height: 30, thickness: 1.0),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                'Total Amount',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w900,
+                                  color: Color(0xFF2D3142),
+                                ),
+                              ),
+                              Text(
+                                '৳${finalAmount.toInt()}',
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w900,
+                                  color: Color(0xFFED145B),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const Divider(height: 30, thickness: 1.0),
+                          const Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text('Order ID', style: TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.w500)),
+                              Text('#FUO-78921', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: Color(0xFF2D3142))),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(width: 48),
+
+                    const SizedBox(height: 32),
+                    const Text(
+                      'Select Payment Method',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFF2D3142),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    ..._paymentMethods.map((method) => _buildPaymentMethodItem(method)),
                   ],
                 ),
               ),
             ),
-          ),
-          // Curved Content Area
-          Expanded(
-            child: Stack(
-              children: [
-                // Orange background behind the curve (Only at the top)
-                Container(
-                  height: 50,
-                  color: const Color(0xFFFFA500),
-                ),
-                Container(
-                  width: double.infinity,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFF8F9FA),
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-                  ),
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 120),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(20),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
-                                blurRadius: 15,
-                                offset: const Offset(0, 5),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  const Text('Subtotal', style: TextStyle(color: Colors.grey)),
-                                  Text('৳${totalPrice.toInt()}', style: const TextStyle(fontWeight: FontWeight.w600)),
-                                ],
-                              ),
-                              const SizedBox(height: 10),
-                              const Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text('Delivery Fee', style: TextStyle(color: Colors.grey)),
-                                  Text('৳50', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.green)),
-                                ],
-                              ),
-                              if (discount > 0) ...[
-                                const SizedBox(height: 10),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text('Promo Discount (${appliedCoupon!.code})', style: const TextStyle(color: Colors.red)),
-                                    Text('-৳${discount.toInt()}', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
-                                  ],
-                                ),
-                              ],
-                              const Divider(height: 30),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  const Text(
-                                    'Total Amount',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black87,
-                                    ),
-                                  ),
-                                  Text(
-                                    '৳${finalAmount.toInt()}',
-                                    style: const TextStyle(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFFFFA500),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 15),
-                              const Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text('Order ID', style: TextStyle(color: Colors.grey, fontSize: 12)),
-                                  Text('#FUO-78921', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 32),
-                        const Text(
-                          'Select Payment Method',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        ..._paymentMethods.map((method) => _buildPaymentMethodItem(method)),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
       bottomNavigationBar: Container(
-        padding: const EdgeInsets.fromLTRB(24, 24, 24, 40),
+        padding: const EdgeInsets.fromLTRB(24, 16, 24, 40),
         decoration: BoxDecoration(
           color: Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, -5),
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 12,
+              offset: const Offset(0, -4),
             ),
           ],
         ),
         child: SizedBox(
           width: double.infinity,
-          height: 55,
-          child: ElevatedButton(
-            onPressed: _isProcessing
-                ? null
-                : () async {
-                    if (_selectedMethod == null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('অনুগ্রহ করে একটি পেমেন্ট মেথড সিলেক্ট করুন'),
-                          backgroundColor: Colors.redAccent,
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                      return;
-                    }
-
-                    if (_selectedMethod == 'bkash' || _selectedMethod == 'nagad') {
-                      if (_phoneController.text.isEmpty || _transactionController.text.isEmpty) {
+          height: 54,
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              gradient: const LinearGradient(
+                colors: [Color(0xFFED145B), Color(0xFFF93B7D)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFED145B).withOpacity(0.3),
+                  blurRadius: 12,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: ElevatedButton(
+              onPressed: _isProcessing
+                  ? null
+                  : () async {
+                      if (_selectedMethod == null) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Please enter your ${_selectedMethod == 'bkash' ? 'bKash' : 'Nagad'} number and Transaction ID'),
+                          const SnackBar(
+                            content: Text('अनुগ্রহ করে একটি পেমেন্ট মেথড সিলেক্ট করুন'),
                             backgroundColor: Colors.redAccent,
                             behavior: SnackBarBehavior.floating,
                           ),
                         );
                         return;
                       }
-                    }
 
-                    if (_selectedMethod == 'card') {
-                      _makePayment(finalAmount);
-                    } else {
-                      setState(() => _isProcessing = true);
-                      // Save to Firestore (best-effort, don't block UI)
-                      try {
-                        final cartItems = ref.read(cartProvider).values.toList();
-                        await ref.read(orderServiceProvider).placeOrder(
-                              items: cartItems,
-                              totalAmount: finalAmount,
-                              address: widget.address,
-                              paymentMethod: _selectedMethod!,
-                            ).timeout(const Duration(seconds: 5));
-                      } catch (e) {
-                        debugPrint('Order save error (non-blocking): $e');
+                      if (_selectedMethod == 'bkash' || _selectedMethod == 'nagad') {
+                        if (_phoneController.text.isEmpty || _transactionController.text.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Please enter your ${_selectedMethod == 'bkash' ? 'bKash' : 'Nagad'} number and Transaction ID'),
+                              backgroundColor: Colors.redAccent,
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                          return;
+                        }
                       }
-                      if (mounted) {
-                        setState(() => _isProcessing = false);
-                        _showSuccessDialog(context);
+
+                      if (_selectedMethod == 'card') {
+                        _makePayment(finalAmount);
+                      } else {
+                        setState(() => _isProcessing = true);
+                        try {
+                          final cartItems = ref.read(cartProvider).values.toList();
+                          await ref.read(orderServiceProvider).placeOrder(
+                                items: cartItems,
+                                totalAmount: finalAmount,
+                                address: widget.address,
+                                paymentMethod: _selectedMethod!,
+                              ).timeout(const Duration(seconds: 5));
+                        } catch (e) {
+                          debugPrint('Order save error (non-blocking): $e');
+                        }
+                        if (mounted) {
+                          setState(() => _isProcessing = false);
+                          _showSuccessDialog(context);
+                        }
                       }
-                    }
-                  },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFFA500),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
+                    },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                foregroundColor: Colors.white,
+                shadowColor: Colors.transparent,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               ),
-              elevation: 5,
-              shadowColor: const Color(0xFFFFA500).withOpacity(0.4),
-            ),
-            child: _isProcessing
-                ? const CircularProgressIndicator(color: Colors.white)
-                : const Text(
-                    'Confirm & Pay Now',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+              child: _isProcessing
+                  ? const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                    )
+                  : const Text(
+                      'Confirm & Pay Now',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
-                  ),
+            ),
           ),
         ),
       ),
@@ -371,21 +367,21 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
         });
       },
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        margin: const EdgeInsets.only(bottom: 16),
+        duration: const Duration(milliseconds: 250),
+        margin: const EdgeInsets.only(bottom: 14),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFFFF8F0) : Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          color: isSelected ? const Color(0xFFED145B).withOpacity(0.04) : Colors.white,
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? const Color(0xFFFFA500) : Colors.transparent,
-            width: 2,
+            color: isSelected ? const Color(0xFFED145B) : Colors.grey.shade100,
+            width: isSelected ? 2.0 : 1.0,
           ),
           boxShadow: [
             BoxShadow(
-              color: isSelected ? const Color(0xFFFFA500).withOpacity(0.15) : Colors.black.withOpacity(0.03),
-              blurRadius: 15,
-              offset: const Offset(0, 5),
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
@@ -395,8 +391,8 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
             Row(
               children: [
                 Container(
-                  width: 50,
-                  height: 50,
+                  width: 44,
+                  height: 44,
                   decoration: BoxDecoration(
                     color: method['color'].withOpacity(0.1),
                     shape: BoxShape.circle,
@@ -406,68 +402,59 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                         ? ClipOval(
                             child: Image.network(
                               method['imageUrl'],
-                              width: 32,
-                              height: 32,
+                              width: 28,
+                              height: 28,
                               fit: BoxFit.contain,
                               errorBuilder: (_, __, ___) => Icon(
-                                Icons.account_balance_wallet_outlined,
+                                Icons.account_balance_wallet_rounded,
                                 color: method['color'],
+                                size: 20,
                               ),
                             ),
                           )
                         : Icon(
                             method['icon'],
                             color: method['color'],
-                            size: 26,
+                            size: 22,
                           ),
                   ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 14),
                 Expanded(
                   child: Text(
                     method['name'],
                     style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                      color: isSelected ? Colors.black : Colors.black87,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      color: isSelected ? const Color(0xFFED145B) : const Color(0xFF2D3142),
                     ),
                   ),
                 ),
-                if (isSelected)
-                  const Icon(
-                    Icons.check_circle,
-                    color: Color(0xFFFFA500),
-                    size: 28,
-                  )
-                else
-                  Container(
-                    width: 24,
-                    height: 24,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.grey[300]!, width: 2),
+                Container(
+                  width: 20,
+                  height: 20,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isSelected ? const Color(0xFFED145B) : Colors.grey[300]!,
+                      width: isSelected ? 6.0 : 2.0,
                     ),
+                    color: Colors.white,
                   ),
+                ),
               ],
             ),
             if (isSelected && (method['id'] == 'bkash' || method['id'] == 'nagad'))
               Column(
                 children: [
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 18),
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFFFCC80).withOpacity(0.5)),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFFFFA500).withOpacity(0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, 2),
-                        )
-                      ],
+                      color: const Color(0xFFED145B).withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFFED145B).withOpacity(0.15)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -477,31 +464,35 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                           children: [
                             const Padding(
                               padding: EdgeInsets.only(top: 2.0),
-                              child: Icon(Icons.info_outline, size: 16, color: Color(0xFFFFA500)),
+                              child: Icon(Icons.info_outline_rounded, size: 16, color: Color(0xFFED145B)),
                             ),
                             const SizedBox(width: 8),
                             Expanded(
-                              child: Text('অনুগ্রহ করে নিচের নাম্বারে ${method['name']} করুন:', style: const TextStyle(color: Colors.black87, fontSize: 13, fontWeight: FontWeight.w500)),
+                              child: Text(
+                                'অনুগ্রহ করে নিচের নাম্বারে ${method['name']} করুন:', 
+                                style: const TextStyle(color: Color(0xFF2D3142), fontSize: 13, fontWeight: FontWeight.w700)
+                              ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 10),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFFF3E0),
-                            borderRadius: BorderRadius.circular(12),
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: Colors.grey.shade100),
                           ),
                           child: const FittedBox(
                             fit: BoxFit.scaleDown,
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.phone_android, size: 20, color: Color(0xFFFFA500)),
+                                Icon(Icons.phone_android_rounded, size: 18, color: Color(0xFFED145B)),
                                 SizedBox(width: 8),
-                                Text('+8801677951406', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87, letterSpacing: 1.2)),
+                                Text('+8801677951406', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Color(0xFF2D3142), letterSpacing: 1.2)),
                                 SizedBox(width: 8),
-                                Text('(Personal)', style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w500)),
+                                Text('(Personal)', style: TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.w500)),
                               ],
                             ),
                           ),
@@ -509,37 +500,35 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 16),
                   TextField(
                     controller: _phoneController,
                     keyboardType: TextInputType.phone,
-                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF2D3142)),
                     decoration: InputDecoration(
                       labelText: 'আপনার ${method['name']} নাম্বার',
-                      labelStyle: const TextStyle(color: Colors.black54),
+                      labelStyle: const TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w500),
                       filled: true,
                       fillColor: Colors.white,
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.withOpacity(0.2))),
-                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFFFA500), width: 1.5)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                      prefixIcon: const Icon(Icons.phone_outlined, color: Color(0xFFFFA500)),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: Colors.grey.shade200)),
+                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFED145B), width: 1.5)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      prefixIcon: const Icon(Icons.phone_android_rounded, color: Color(0xFFED145B), size: 20),
                     ),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: _transactionController,
-                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF2D3142)),
                     decoration: InputDecoration(
                       labelText: 'ট্রানজ্যাকশন আইডি (TrxID)',
-                      labelStyle: const TextStyle(color: Colors.black54),
+                      labelStyle: const TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w500),
                       filled: true,
                       fillColor: Colors.white,
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.withOpacity(0.2))),
-                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFFFA500), width: 1.5)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                      prefixIcon: const Icon(Icons.receipt_long_outlined, color: Color(0xFFFFA500)),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: Colors.grey.shade200)),
+                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFED145B), width: 1.5)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      prefixIcon: const Icon(Icons.receipt_long_rounded, color: Color(0xFFED145B), size: 20),
                     ),
                   ),
                 ],
@@ -554,7 +543,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
     ref.read(cartProvider.notifier).clearCart();
     ref.read(couponProvider.notifier).clearCoupon();
     Navigator.of(outerContext).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => _OrderSuccessPage()),
+      MaterialPageRoute(builder: (_) => const _OrderSuccessPage()),
       (route) => false,
     );
   }
@@ -604,7 +593,7 @@ class _OrderSuccessPage extends StatelessWidget {
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFFA500),
+                    backgroundColor: const Color(0xFFED145B),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                     ),

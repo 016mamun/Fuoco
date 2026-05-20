@@ -3,9 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/food_item.dart';
 import '../providers/cart_provider.dart';
-import '../providers/favorites_provider.dart';
-import 'favorites_screen.dart';
-import 'orders_screen.dart';
+
+import '../providers/search_provider.dart';
+import '../providers/branch_provider.dart';
+import '../services/auth_service.dart';
+import 'login_screen.dart';
+import 'register_screen.dart';
+
 import 'cart_screen.dart';
 import '../widgets/fuoco_bottom_nav.dart';
 
@@ -21,24 +25,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   final PageController _pageController = PageController();
   Timer? _timer;
   int _currentPage = 0;
-  bool _isSearching = false;
+
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
   
   // Filter variables next to search bar
   String _sortBy = 'Popularity';
   double _minPriceFilter = 0;
-  double _maxPriceFilter = 1000;
+  double _maxPriceFilter = 3000;
   bool _isFilterApplied = false;
   
-  String _selectedLocation = 'Dhaka, Bangladesh';
-  final List<String> _locations = [
-    'Dhaka, Bangladesh',
-    'Dhanmondi, Dhaka',
-    'Gulshan, Dhaka',
-    'Banani, Dhaka',
-    'Uttara, Dhaka',
-  ];
+
 
   final List<String> _bannerImages = [
     'assets/images/banner-1.gif',
@@ -481,7 +478,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           children: [
             // Always Sticky Main Header
             Container(
-              color: const Color(0xFFFFA500),
+              color: const Color(0xFFED145B),
               child: _buildHeader(),
             ),
             
@@ -491,7 +488,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   // Promo Banner (Scrolls away)
                   SliverToBoxAdapter(
                     child: Container(
-                      color: const Color(0xFFFFA500),
+                      color: const Color(0xFFED145B),
                       padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 0),
                       child: _buildPromoBanner(),
                     ),
@@ -503,7 +500,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     delegate: _StickyHeaderDelegate(
                       height: 170.0,
                       child: Container(
-                        color: const Color(0xFFFFA500),
+                        color: const Color(0xFFED145B),
                         child: Container(
                           decoration: const BoxDecoration(
                             color: Colors.white,
@@ -524,13 +521,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     child: Container(
                                       padding: const EdgeInsets.all(6),
                                       decoration: BoxDecoration(
-                                        color: const Color(0xFFFFA500).withOpacity(0.08),
+                                        color: const Color(0xFFED145B).withOpacity(0.08),
                                         shape: BoxShape.circle,
                                       ),
                                       child: const Icon(
                                         Icons.arrow_back_ios_new_rounded,
                                         size: 14,
-                                        color: Color(0xFFFFA500),
+                                        color: Color(0xFFED145B),
                                       ),
                                     ),
                                   ),
@@ -541,13 +538,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     child: Container(
                                       padding: const EdgeInsets.all(6),
                                       decoration: BoxDecoration(
-                                        color: const Color(0xFFFFA500).withOpacity(0.08),
+                                        color: const Color(0xFFED145B).withOpacity(0.08),
                                         shape: BoxShape.circle,
                                       ),
                                       child: const Icon(
                                         Icons.arrow_forward_ios_rounded,
                                         size: 14,
-                                        color: Color(0xFFFFA500),
+                                        color: Color(0xFFED145B),
                                       ),
                                     ),
                                   ),
@@ -597,6 +594,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildHeader() {
+    final isSearching = ref.watch(searchBarVisibilityProvider);
+    final selectedBranch = ref.watch(selectedBranchProvider);
+    
+    if (!isSearching && _searchQuery.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        setState(() {
+          _searchQuery = '';
+          _searchController.clear();
+        });
+      });
+    }
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16.0, 12.0, 16.0, 16.0),
       child: Column(
@@ -606,70 +615,58 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Left side: Pin Icon + Location Popup Button
-              Expanded(
-                child: PopupMenuButton<String>(
-                  onSelected: (String value) {
-                    setState(() {
-                      _selectedLocation = value;
-                    });
-                  },
-                  offset: const Offset(0, 40),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                  itemBuilder: (BuildContext context) {
-                    return _locations.map((String location) {
-                      return PopupMenuItem<String>(
-                        value: location,
-                        child: Text(location, style: const TextStyle(fontSize: 14)),
-                      );
-                    }).toList();
-                  },
+              // Left side: Location Switcher Capsule (Pill)
+              GestureDetector(
+                onTap: () => _showBranchSwitcherBottomSheet(context, ref),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.15),
+                      width: 1.0,
+                    ),
+                  ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.location_on_rounded,
-                          color: Colors.white,
-                          size: 20,
-                        ),
+                      const Icon(
+                        Icons.location_on_rounded,
+                        color: Colors.white,
+                        size: 18,
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 6),
                       Flexible(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Row(
+                            Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
-                                  'Deliver to',
+                                  'Branch',
                                   style: TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w500,
+                                    color: Colors.white.withOpacity(0.8),
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
-                                SizedBox(width: 2),
+                                const SizedBox(width: 2),
                                 Icon(
                                   Icons.keyboard_arrow_down_rounded,
-                                  color: Colors.white70,
-                                  size: 14,
+                                  color: Colors.white.withOpacity(0.8),
+                                  size: 12,
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 2),
                             Text(
-                              _selectedLocation,
+                              selectedBranch.name,
                               style: const TextStyle(
                                 color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 13,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -682,99 +679,350 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
               ),
               const SizedBox(width: 12),
-              // Right side: Notification + Cart Badge
+              // Right side: Notification + Cart Badge + Sign In/Up
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Notification Icon
-                  GestureDetector(
-                    onTap: () => _showNotificationQuickView(),
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        shape: BoxShape.circle,
+                  if (ref.watch(authServiceProvider) == null) ...[
+                    // Cart Badge
+                    _buildCartBadge(),
+                    const SizedBox(width: 10),
+                    // Sign In Premium Button
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const LoginScreen()),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: const Color(0xFFED145B),
+                        elevation: 2,
+                        shadowColor: Colors.black.withOpacity(0.2),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
-                      child: const Icon(
-                        Icons.notifications_none_rounded,
-                        color: Colors.white,
-                        size: 20,
+                      child: const Text(
+                        'Sign In',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 12,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  // Cart Badge
-                  _buildCartBadge(),
+                    const SizedBox(width: 8),
+                    // Sign Up Premium Button
+                    OutlinedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const RegisterScreen()),
+                        );
+                      },
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        side: const BorderSide(color: Colors.white, width: 1.2),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: const Text(
+                        'Sign Up',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ] else ...[
+                    // Notification Icon
+                    GestureDetector(
+                      onTap: () => _showNotificationQuickView(),
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.notifications_none_rounded,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    // Cart Badge
+                    _buildCartBadge(),
+                  ],
                 ],
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          // Row 2: Search Bar
-          Container(
-            height: 48,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.06),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: TextField(
-              controller: _searchController,
-              style: const TextStyle(color: Colors.black87, fontSize: 14),
-              onChanged: (value) {
-                setState(() {
-                  _searchQuery = value;
-                });
-              },
-              decoration: InputDecoration(
-                hintText: 'Search for shops & restaurants',
-                hintStyle: TextStyle(color: Colors.grey[500], fontSize: 14),
-                prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFFFFA500), size: 22),
-                suffixIcon: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (_searchQuery.isNotEmpty)
+          if (isSearching) ...[
+            const SizedBox(height: 16),
+            // Row 2: Search Bar
+            Container(
+              height: 48,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.06),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: TextField(
+                controller: _searchController,
+                style: const TextStyle(color: Colors.black87, fontSize: 14),
+                onChanged: (value) {
+                  setState(() {
+                    _searchQuery = value;
+                  });
+                },
+                decoration: InputDecoration(
+                  hintText: 'Search for shops & restaurants',
+                  hintStyle: TextStyle(color: Colors.grey[500], fontSize: 14),
+                  prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFFED145B), size: 22),
+                  suffixIcon: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (_searchQuery.isNotEmpty)
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _searchQuery = '';
+                              _searchController.clear();
+                            });
+                          },
+                          child: const Icon(Icons.close_rounded, color: Colors.grey, size: 20),
+                        ),
+                      if (_searchQuery.isNotEmpty) const SizedBox(width: 8),
                       GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _searchQuery = '';
-                            _searchController.clear();
-                          });
-                        },
-                        child: const Icon(Icons.close_rounded, color: Colors.grey, size: 20),
-                      ),
-                    if (_searchQuery.isNotEmpty) const SizedBox(width: 8),
-                    GestureDetector(
-                      onTap: () => _showFilterBottomSheet(context),
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        margin: const EdgeInsets.only(right: 8),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFA500).withOpacity(0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.tune_rounded,
-                          color: _isFilterApplied ? const Color(0xFFFFA500) : Colors.grey[700],
-                          size: 18,
+                        onTap: () => _showFilterBottomSheet(context),
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          margin: const EdgeInsets.only(right: 8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFED145B).withOpacity(0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.tune_rounded,
+                            color: _isFilterApplied ? const Color(0xFFED145B) : Colors.grey[700],
+                            size: 18,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 13),
                 ),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(vertical: 13),
               ),
             ),
-          ),
+          ],
         ],
       ),
+    );
+  }
+
+  void _showBranchSwitcherBottomSheet(BuildContext context, WidgetRef ref) {
+    final selectedBranch = ref.read(selectedBranchProvider);
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Pull bar
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4.5,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Select Branch',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF2D3142),
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Switch outlet to see menu & availability',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          color: Color(0xFF9C9EA8),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded, color: Colors.grey),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.5,
+                ),
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: branchesList.length,
+                  itemBuilder: (context, index) {
+                    final branch = branchesList[index];
+                    final isSelected = branch.name == selectedBranch.name;
+                    final isOpen = branch.isOpen;
+
+                    return GestureDetector(
+                      onTap: () {
+                        ref.read(selectedBranchProvider.notifier).selectBranch(branch);
+                        Navigator.pop(context);
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? const Color(0xFFED145B).withOpacity(0.04)
+                              : Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: isSelected
+                                ? const Color(0xFFED145B)
+                                : Colors.grey.shade200,
+                            width: isSelected ? 2.0 : 1.2,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? const Color(0xFFED145B).withOpacity(0.1)
+                                    : Colors.grey[100],
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.storefront_rounded,
+                                color: isSelected
+                                    ? const Color(0xFFED145B)
+                                    : Colors.grey[600],
+                                size: 20,
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Text(
+                                        branch.name,
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w800,
+                                          fontSize: 15,
+                                          color: isSelected
+                                              ? const Color(0xFFED145B)
+                                              : const Color(0xFF2D3142),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 6,
+                                          vertical: 2,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: isOpen
+                                              ? const Color(0xFF2ECC71).withOpacity(0.12)
+                                              : Colors.grey.withOpacity(0.12),
+                                          borderRadius: BorderRadius.circular(4),
+                                        ),
+                                        child: Text(
+                                          isOpen ? 'Open' : 'Closed',
+                                          style: TextStyle(
+                                            fontSize: 9,
+                                            fontWeight: FontWeight.w800,
+                                            color: isOpen
+                                                ? const Color(0xFF27AE60)
+                                                : Colors.grey.shade600,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    branch.address,
+                                    style: TextStyle(
+                                      fontSize: 11.5,
+                                      color: Colors.grey[600],
+                                      height: 1.3,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (isSelected)
+                              const Icon(
+                                Icons.check_circle_rounded,
+                                color: Color(0xFFED145B),
+                                size: 20,
+                              ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -799,7 +1047,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 children: [
                   const Row(
                     children: [
-                      Icon(Icons.notifications_active_rounded, color: Color(0xFFFFA500), size: 24),
+                      Icon(Icons.notifications_active_rounded, color: Color(0xFFED145B), size: 24),
                       SizedBox(width: 8),
                       Text(
                         'Notifications',
@@ -847,10 +1095,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isNew ? const Color(0xFFFFA500).withOpacity(0.06) : Colors.grey[50],
+        color: isNew ? const Color(0xFFED145B).withOpacity(0.06) : Colors.grey[50],
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isNew ? const Color(0xFFFFA500).withOpacity(0.15) : Colors.grey[200]!,
+          color: isNew ? const Color(0xFFED145B).withOpacity(0.15) : Colors.grey[200]!,
           width: 1,
         ),
       ),
@@ -860,12 +1108,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: isNew ? const Color(0xFFFFA500).withOpacity(0.15) : Colors.grey[200],
+              color: isNew ? const Color(0xFFED145B).withOpacity(0.15) : Colors.grey[200],
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.notifications_rounded,
-              color: isNew ? const Color(0xFFFFA500) : Colors.grey[600],
+              color: isNew ? const Color(0xFFED145B) : Colors.grey[600],
               size: 18,
             ),
           ),
@@ -883,7 +1131,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
-                          color: isNew ? const Color(0xFFFFA500) : Colors.black87,
+                          color: isNew ? const Color(0xFFED145B) : Colors.black87,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -918,7 +1166,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           label: Text(
             totalItems.toString(),
             style: const TextStyle(
-              color: Color(0xFFFFA500),
+              color: Color(0xFFED145B),
               fontWeight: FontWeight.bold,
               fontSize: 10,
             ),
@@ -957,7 +1205,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFFFFA500).withOpacity(0.3),
+              color: const Color(0xFFED145B).withOpacity(0.3),
               blurRadius: 15,
               offset: const Offset(0, 5),
             )
@@ -982,7 +1230,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     fit: BoxFit.fill,
                     errorBuilder: (context, error, stackTrace) {
                       return Container(
-                        color: const Color(0xFFFFA500),
+                        color: const Color(0xFFED145B),
                         child: Row(
                           children: [
                             Expanded(
@@ -999,7 +1247,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     Container(
                                       padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                                       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.all(Radius.circular(20))),
-                                      child: const Text('Claim voucher', style: TextStyle(color: const Color(0xFFFFA500), fontSize: 10, fontWeight: FontWeight.bold)),
+                                      child: const Text('Claim voucher', style: TextStyle(color: const Color(0xFFED145B), fontSize: 10, fontWeight: FontWeight.bold)),
                                     )
                                   ],
                                 ),
@@ -1061,7 +1309,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 right: index == _categories.length - 1 ? 0 : spacing,
               ),
               decoration: BoxDecoration(
-                color: isSelected ? const Color(0xFFFFA500) : const Color(0xFFFFCCBC),
+                color: isSelected ? const Color(0xFFED145B) : const Color(0xFFFFCCBC),
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   if (!isSelected)
@@ -1072,7 +1320,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ),
                   if (isSelected)
                     BoxShadow(
-                      color: const Color(0xFFFFA500).withOpacity(0.3),
+                      color: const Color(0xFFED145B).withOpacity(0.3),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -1094,9 +1342,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ? Image.asset(
                             catImageUrl, 
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Icon(Icons.fastfood, color: isSelected ? const Color(0xFFFFA500) : Colors.grey, size: 20),
+                            errorBuilder: (_, __, ___) => Icon(Icons.fastfood, color: isSelected ? const Color(0xFFED145B) : Colors.grey, size: 20),
                           )
-                        : Icon(Icons.fastfood, color: isSelected ? const Color(0xFFFFA500) : Colors.grey, size: 20),
+                        : Icon(Icons.fastfood, color: isSelected ? const Color(0xFFED145B) : Colors.grey, size: 20),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -1214,12 +1462,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.grey.shade300, width: 1.2),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.grey.withOpacity(0.1),
-                  blurRadius: 10,
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 15,
                   spreadRadius: 1,
-                  offset: const Offset(0, 4),
+                  offset: const Offset(0, 5),
                 )
               ],
             ),
@@ -1257,22 +1506,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           ),
                         ),
                       ],
-                    ),
-                    Consumer(
-                      builder: (context, ref, child) {
-                        final favorites = ref.watch(favoritesProvider);
-                        final isFavorite = favorites.any((f) => f.id == item.id);
-                        return GestureDetector(
-                          onTap: () {
-                            ref.read(favoritesProvider.notifier).toggleFavorite(item);
-                          },
-                          child: Icon(
-                            isFavorite ? Icons.favorite : Icons.favorite_border,
-                            color: isFavorite ? const Color(0xFFFFA500) : Colors.black54,
-                            size: 20,
-                          ),
-                        );
-                      },
                     ),
                   ],
                 ),
@@ -1315,14 +1548,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           SnackBar(
                             content: Text('${item.name} added to cart!'),
                             duration: const Duration(seconds: 1),
-                            backgroundColor: const Color(0xFFFFA500),
+                            backgroundColor: const Color(0xFFED145B),
                           ),
                         );
                       },
                       child: Container(
                         padding: const EdgeInsets.all(4),
                         decoration: const BoxDecoration(
-                          color: const Color(0xFFFFA500),
+                          color: const Color(0xFFED145B),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
@@ -1343,71 +1576,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildFloatingNavBar() {
-    return Container(
-      height: 70,
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFA500),
-        borderRadius: BorderRadius.circular(35),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          )
-        ],
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildNavItem(Icons.home_outlined, true),
-          _buildNavItem(Icons.person_outline, false),
-          
-          Transform.translate(
-            offset: const Offset(0, -15),
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFA500),
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 4),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
-                    blurRadius: 10,
-                    offset: const Offset(0, 5),
-                  )
-                ],
-              ),
-              child: const Icon(Icons.add, color: Colors.white, size: 28),
-            ),
-          ),
-          
-          _buildNavItem(Icons.article_outlined, false),
-          _buildNavItem(Icons.favorite, false),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNavItem(IconData icon, bool isSelected, {VoidCallback? onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: const BoxDecoration(
-          color: Colors.transparent,
-          shape: BoxShape.circle,
-        ),
-        child: Icon(
-          icon,
-          color: isSelected ? const Color(0xFFFFA500) : Colors.grey[400],
-          size: 26,
-        ),
-      ),
-    );
-  }
 
   void _showFoodDetailsBottomSheet(BuildContext context, FoodItem item) {
     int quantity = 1;
@@ -1442,7 +1610,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             errorBuilder: (_, __, ___) => Container(
                               height: 250,
                               color: const Color(0xFFFFF3E0),
-                              child: const Icon(Icons.fastfood, size: 80, color: Color(0xFFFFA500)),
+                              child: const Icon(Icons.fastfood, size: 80, color: Color(0xFFED145B)),
                             ),
                           ),
                         ),
@@ -1462,35 +1630,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             ),
                           ),
                         ),
-                        // Favorite Icon
-                        Positioned(
-                          top: 16,
-                          right: 16,
-                          child: Consumer(
-                            builder: (context, ref, child) {
-                              final favorites = ref.watch(favoritesProvider);
-                              final isFavorite = favorites.any((f) => f.id == item.id);
-                              return GestureDetector(
-                                onTap: () {
-                                  ref.read(favoritesProvider.notifier).toggleFavorite(item);
-                                  setModalState(() {});
-                                },
-                                child: Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: const BoxDecoration(
-                                    color: Colors.white70,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Icon(
-                                    isFavorite ? Icons.favorite : Icons.favorite_border,
-                                    color: isFavorite ? const Color(0xFFFFA500) : Colors.black87,
-                                    size: 20,
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
+
                       ],
                     ),
                     
@@ -1506,13 +1646,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFFFA500).withOpacity(0.1),
+                                  color: const Color(0xFFED145B).withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(15),
                                 ),
                                 child: Text(
                                   item.category,
                                   style: const TextStyle(
-                                    color: Color(0xFFFFA500),
+                                    color: Color(0xFFED145B),
                                     fontWeight: FontWeight.bold,
                                     fontSize: 12,
                                   ),
@@ -1602,7 +1742,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     style: const TextStyle(
                                       fontSize: 24,
                                       fontWeight: FontWeight.bold,
-                                      color: Color(0xFFFFA500),
+                                      color: Color(0xFFED145B),
                                     ),
                                   ),
                                 ],
@@ -1664,15 +1804,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
                                         content: Text('$quantity Pcs of ${item.name} added to cart!'),
-                                        backgroundColor: const Color(0xFFFFA500),
+                                        backgroundColor: const Color(0xFFED145B),
                                       ),
                                     );
                                   },
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFFFFA500),
+                                    backgroundColor: const Color(0xFFED145B),
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                                     elevation: 5,
-                                    shadowColor: const Color(0xFFFFA500).withOpacity(0.4),
+                                    shadowColor: const Color(0xFFED145B).withOpacity(0.4),
                                   ),
                                   child: const Text(
                                     'Add to Cart',
@@ -1794,7 +1934,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFFFFA500),
+                          color: Color(0xFFED145B),
                         ),
                       ),
                     ],
@@ -1803,9 +1943,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   RangeSlider(
                     values: RangeValues(tempMinPrice, tempMaxPrice),
                     min: 0,
-                    max: 1000,
-                    divisions: 20,
-                    activeColor: const Color(0xFFFFA500),
+                    max: 3000,
+                    divisions: 60,
+                    activeColor: const Color(0xFFED145B),
                     inactiveColor: Colors.grey[200],
                     labels: RangeLabels(
                       '৳${tempMinPrice.toInt()}',
@@ -1830,13 +1970,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             setState(() {
                               _sortBy = 'Popularity';
                               _minPriceFilter = 0;
-                              _maxPriceFilter = 1000;
+                              _maxPriceFilter = 3000;
                               _isFilterApplied = false;
                             });
                             Navigator.pop(context);
                           },
                           style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Color(0xFFFFA500)),
+                            side: const BorderSide(color: Color(0xFFED145B)),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(15),
                             ),
@@ -1844,7 +1984,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           ),
                           child: const Text(
                             'Reset All',
-                            style: TextStyle(color: Color(0xFFFFA500), fontWeight: FontWeight.bold),
+                            style: TextStyle(color: Color(0xFFED145B), fontWeight: FontWeight.bold),
                           ),
                         ),
                       ),
@@ -1862,7 +2002,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             Navigator.pop(context);
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFFFA500),
+                            backgroundColor: const Color(0xFFED145B),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(15),
                             ),
@@ -1891,10 +2031,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFFFA500) : Colors.grey[100],
+          color: isSelected ? const Color(0xFFED145B) : Colors.grey[100],
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? const Color(0xFFFFA500) : Colors.transparent,
+            color: isSelected ? const Color(0xFFED145B) : Colors.transparent,
           ),
         ),
         child: Text(
